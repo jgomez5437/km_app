@@ -191,3 +191,13 @@ body {
   color: #e9d5ff;
 }
 
+/* Hide scrollbars for mobile horizontal toolbars */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+

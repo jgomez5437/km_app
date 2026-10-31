@@ -102,4 +102,92 @@ body {
   border-radius: 0.5rem;
   border: 1px solid #30363d;
   overflow-x: auto;
+  margin: 1rem 0;
+  font-family: var(--font-mono), monospace;
 }
+
+/* Obsidian-Style Markdown Typography */
+.tiptap h1 {
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.25;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 0.4rem;
+}
+
+.tiptap h2 {
+  font-size: 1.45rem;
+  font-weight: 600;
+  color: #f3f4f6;
+  margin-top: 1.5rem;
+  margin-bottom: 0.6rem;
+  line-height: 1.3;
+}
+
+.tiptap h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #e5e7eb;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.tiptap p {
+  margin-top: 0.65rem;
+  margin-bottom: 0.65rem;
+  line-height: 1.75;
+  color: #d1d5db;
+}
+
+.tiptap ul:not([data-type="taskList"]) {
+  list-style-type: disc;
+  padding-left: 1.6rem;
+  margin-top: 0.6rem;
+  margin-bottom: 0.6rem;
+}
+
+.tiptap ol {
+  list-style-type: decimal;
+  padding-left: 1.6rem;
+  margin-top: 0.6rem;
+  margin-bottom: 0.6rem;
+}
+
+.tiptap li {
+  margin-top: 0.35rem;
+  margin-bottom: 0.35rem;
+  line-height: 1.6;
+  color: #d1d5db;
+}
+
+.tiptap strong {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.tiptap em {
+  font-style: italic;
+  color: #cbd5e1;
+}
+
+.tiptap hr {
+  border: none;
+  border-top: 1px solid #30363d;
+  margin: 1.75rem 0;
+}
+
+.tiptap a {
+  color: #c084fc;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s ease;
+}
+
+.tiptap a:hover {
+  color: #e9d5ff;
+}
+

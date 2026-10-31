@@ -7,6 +7,7 @@ import Placeholder from "@tiptap/extension-placeholder";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 import Link from "@tiptap/extension-link";
+import { Markdown } from "tiptap-markdown";
 import {
   Bold,
   Italic,
@@ -58,24 +59,36 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
           class: "text-purple-400 hover:text-purple-300 underline underline-offset-2",
         },
       }),
+      Markdown.configure({
+        html: true,
+        tightLists: true,
+        bulletListMarker: "-",
+        linkify: true,
+        breaks: true,
+      }),
     ],
     content: initialContent,
     immediatelyRender: false,
     editorProps: {
       attributes: {
         class:
-          "prose prose-invert prose-purple max-w-none focus:outline-none min-h-[500px] text-gray-200 text-sm leading-relaxed p-6",
+          "nexus-editor-content focus:outline-none min-h-[500px] text-gray-200 text-sm leading-relaxed p-6",
       },
     },
     onUpdate: ({ editor }) => {
-      onUpdateContent(editor.getHTML());
+      const md = (editor.storage as any).markdown?.getMarkdown();
+      onUpdateContent(md || editor.getHTML());
     },
   });
 
   // Sync editor content if note switches
   useEffect(() => {
-    if (editor && editor.getHTML() !== initialContent) {
-      editor.commands.setContent(initialContent, { emitUpdate: false });
+    if (editor) {
+      const current =
+        (editor.storage as any).markdown?.getMarkdown() ?? editor.getHTML();
+      if (current !== initialContent) {
+        editor.commands.setContent(initialContent, { emitUpdate: false });
+      }
     }
   }, [initialContent, editor]);
 

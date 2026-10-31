@@ -37,29 +37,36 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
   const [endpoint, setEndpoint] = useState("http://localhost:11434");
   const [apiKey, setApiKey] = useState("");
 
-  // Automated link recommendations based on content overlap
+  // Automated related note recommendations based on content & folder overlap
   const suggestedLinks = React.useMemo(() => {
-    const existingLinksLower = new Set(activeNote.links.map((l) => l.toLowerCase()));
-    const currentTitleLower = activeNote.title.toLowerCase();
-
+    const activeTags = activeNote.tags || [];
     const suggestions: { note: Note; reason: string }[] = [];
 
     allNotes.forEach((candidate) => {
       if (candidate.id === activeNote.id) return;
-      if (existingLinksLower.has(candidate.title.toLowerCase())) return;
+
+      // Check if same folder
+      if (activeNote.folderId && candidate.folderId === activeNote.folderId) {
+        suggestions.push({
+          note: candidate,
+          reason: "Located in the same folder.",
+        });
+        return;
+      }
 
       // Check if candidate title appears in active note text
       const candidateTitleRegex = new RegExp(`\\b${candidate.title}\\b`, "i");
       if (candidateTitleRegex.test(activeNote.content)) {
         suggestions.push({
           note: candidate,
-          reason: `Mentioned directly in this note's body.`,
+          reason: `Mentioned in this note's body.`,
         });
         return;
       }
 
       // Check shared tags
-      const sharedTags = candidate.tags.filter((t) => activeNote.tags.includes(t));
+      const candidateTags = candidate.tags || [];
+      const sharedTags = candidateTags.filter((t) => activeTags.includes(t));
       if (sharedTags.length > 0) {
         suggestions.push({
           note: candidate,
@@ -84,7 +91,7 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
         (n) =>
           n.title.toLowerCase().includes(q) ||
           n.content.toLowerCase().includes(q) ||
-          n.tags.some((t) => t.toLowerCase().includes(q))
+          (n.tags || []).some((t) => t.toLowerCase().includes(q))
       );
 
       if (matches.length > 0) {

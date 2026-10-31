@@ -8,7 +8,7 @@ import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 import Link from "@tiptap/extension-link";
 import { Markdown } from "tiptap-markdown";
-import { BacklinkItem } from "@/types/vault";
+import { Note } from "@/types/vault";
 import {
   Bold,
   Italic,
@@ -20,8 +20,7 @@ import {
   ListOrdered,
   CheckSquare,
   Quote,
-  Link as LinkIcon,
-  Sparkles,
+  Plus,
   FileText,
 } from "lucide-react";
 
@@ -30,8 +29,9 @@ interface NexusEditorProps {
   noteTitle: string;
   onUpdateTitle: (newTitle: string) => void;
   onUpdateContent: (content: string) => void;
-  onOpenWikilink?: (targetTitle: string) => void;
-  incomingBacklinks?: BacklinkItem[];
+  subpages?: Note[];
+  onCreateSubpage?: () => void;
+  onSelectNote?: (noteId: string) => void;
 }
 
 export const NexusEditor: React.FC<NexusEditorProps> = ({
@@ -39,8 +39,9 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
   noteTitle,
   onUpdateTitle,
   onUpdateContent,
-  onOpenWikilink,
-  incomingBacklinks = [],
+  subpages = [],
+  onCreateSubpage,
+  onSelectNote,
 }) => {
   const editor = useEditor({
     extensions: [
@@ -50,7 +51,7 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
         },
       }),
       Placeholder.configure({
-        placeholder: "Write thoughts, record insights, or type [[ to link another note...",
+        placeholder: "Write thoughts, record insights, or organize concepts...",
       }),
       TaskList,
       TaskItem.configure({
@@ -75,7 +76,7 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
     editorProps: {
       attributes: {
         class:
-          "nexus-editor-content focus:outline-none min-h-[500px] text-gray-200 text-sm leading-relaxed p-4 sm:p-6",
+          "nexus-editor-content focus:outline-none min-h-[450px] text-gray-200 text-sm leading-relaxed",
       },
     },
     onUpdate: ({ editor }) => {
@@ -98,7 +99,7 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
   if (!editor) {
     return (
       <div className="flex-1 flex items-center justify-center text-gray-500 text-sm">
-        Loading editor engine...
+        Loading editor...
       </div>
     );
   }
@@ -109,31 +110,20 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
   const charCount = text.length;
   const readingTime = Math.ceil(wordCount / 200);
 
-  const insertWikilink = () => {
-    const target = prompt("Enter target note title to link:");
-    if (target) {
-      editor
-        .chain()
-        .focus()
-        .insertContent(`[[${target.trim()}]] `)
-        .run();
-    }
-  };
-
   return (
     <div className="flex-1 flex flex-col h-full bg-[#0d1117] text-gray-100 overflow-hidden">
-      {/* Note Header / Title Bar */}
-      <div className="px-4 sm:px-8 pt-4 sm:pt-6 pb-2 border-b border-gray-800/80">
+      {/* 1. Single Canonical Title Input */}
+      <div className="px-4 sm:px-8 pt-4 sm:pt-6 pb-3 border-b border-gray-800/80">
         <input
           type="text"
           value={noteTitle}
           onChange={(e) => onUpdateTitle(e.target.value)}
-          placeholder="Note Title..."
+          placeholder="Untitled Note..."
           className="w-full text-xl sm:text-2xl font-bold bg-transparent text-white border-none focus:outline-none placeholder-gray-600 tracking-tight"
         />
       </div>
 
-      {/* Touch-Friendly Horizontally Scrollable Formatting Toolbar */}
+      {/* 2. Formatting Toolbar (Clean, Horizontal Scroll on Mobile) */}
       <div className="px-3 sm:px-8 py-2 bg-[#161b22]/70 border-b border-gray-800/60 flex items-center gap-1 text-gray-400 text-xs overflow-x-auto no-scrollbar flex-nowrap">
         <button
           onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
@@ -231,49 +221,61 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
         >
           <Quote className="w-4 h-4" />
         </button>
-
-        <div className="w-[1px] h-4 bg-gray-800 mx-1 shrink-0" />
-
-        {/* Wikilink action */}
-        <button
-          onClick={insertWikilink}
-          className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-purple-900/30 text-purple-300 hover:bg-purple-900/50 transition border border-purple-800/40 shrink-0 touch-manipulation"
-          title="Insert [[Link]]"
-        >
-          <LinkIcon className="w-3.5 h-3.5" />
-          <span className="font-mono text-[11px]">[[link]]</span>
-        </button>
       </div>
 
-      {/* Main Editable Canvas */}
+      {/* 3. Main Editable Canvas */}
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         <div className="max-w-4xl mx-auto px-4 sm:px-8 py-4 sm:py-6">
           <EditorContent editor={editor} />
 
-          {/* Clean Document-Level Linked Notes (Minimalist Backlinks) */}
-          {incomingBacklinks.length > 0 && (
-            <div className="mt-12 pt-6 border-t border-gray-800/80">
-              <span className="text-[11px] font-medium text-gray-500 uppercase tracking-wider block mb-2.5">
-                Linked from {incomingBacklinks.length} {incomingBacklinks.length === 1 ? "note" : "notes"}:
+          {/* 4. Hierarchical Subpages Section */}
+          <div className="mt-12 pt-6 border-t border-gray-800/80">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                <FileText className="w-3.5 h-3.5 text-purple-400" />
+                <span>Subpages ({subpages.length})</span>
               </span>
-              <div className="flex flex-wrap gap-2">
-                {incomingBacklinks.map((bl) => (
+              {onCreateSubpage && (
+                <button
+                  onClick={onCreateSubpage}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-purple-900/30 hover:bg-purple-900/50 text-purple-300 border border-purple-800/50 text-xs transition active:scale-95"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Subpage</span>
+                </button>
+              )}
+            </div>
+
+            {subpages.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {subpages.map((sub) => (
                   <button
-                    key={bl.noteId}
-                    onClick={() => onOpenWikilink?.(bl.noteTitle)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#161b22] hover:bg-purple-950/40 text-purple-300 hover:text-purple-200 border border-gray-800 hover:border-purple-800/50 text-xs transition active:scale-95"
+                    key={sub.id}
+                    onClick={() => onSelectNote?.(sub.id)}
+                    className="flex items-center justify-between p-3 rounded-lg bg-[#161b22] hover:bg-[#1f242c] border border-gray-800 hover:border-purple-800/40 text-left transition group"
                   >
-                    <span className="text-gray-500 text-[10px]">↗</span>
-                    <span>[[{bl.noteTitle}]]</span>
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <FileText className="w-4 h-4 text-purple-400 shrink-0" />
+                      <span className="text-sm font-medium text-gray-200 truncate group-hover:text-white">
+                        {sub.title}
+                      </span>
+                    </div>
+                    <span className="text-gray-500 group-hover:text-purple-300 text-xs ml-2">
+                      →
+                    </span>
                   </button>
                 ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <p className="text-xs text-gray-500 italic">
+                No subpages yet. Group related concepts under this note by clicking Add Subpage.
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Minimalist Bottom Status Bar (No Jargon) */}
+      {/* 5. Minimalist Bottom Status Bar */}
       <div className="px-4 sm:px-6 py-2 bg-[#161b22] border-t border-gray-800 text-[11px] text-gray-500 flex items-center justify-between">
         <div>
           <span>{wordCount} words</span>
@@ -287,4 +289,3 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
     </div>
   );
 };
-

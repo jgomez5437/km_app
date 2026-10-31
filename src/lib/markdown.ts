@@ -1,4 +1,10 @@
-import { Note, BacklinkItem } from "@/types/vault";
+import { Note } from "@/types/vault";
+
+export interface BacklinkItem {
+  noteId: string;
+  noteTitle: string;
+  contextSnippet: string;
+}
 
 // Extract [[wikilinks]] from text
 export function extractWikilinks(content: string): string[] {

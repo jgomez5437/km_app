@@ -55,7 +55,7 @@ export const sessions = pgTable("sessions", {
   expires: timestamp("expires", { withTimezone: true }).notNull(),
 });
 
-// 4. Vaults Table (Workspaces / Separate Knowledge Bases per user)
+// 4. Vaults Table
 export const vaults = pgTable(
   "vaults",
   {
@@ -72,7 +72,29 @@ export const vaults = pgTable(
   (table) => [index("idx_vaults_user_id").on(table.userId)]
 );
 
-// 5. Notes Table
+// 5. Folders Table (Organizational categories within vault)
+export const folders = pgTable(
+  "folders",
+  {
+    id: varchar("id", { length: 128 }).primaryKey(),
+    userId: varchar("user_id", { length: 128 }).references(() => users.id, {
+      onDelete: "cascade",
+    }),
+    vaultId: varchar("vault_id", { length: 128 }).references(() => vaults.id, {
+      onDelete: "cascade",
+    }),
+    name: text("name").notNull(),
+    color: text("color"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("idx_folders_user_id").on(table.userId),
+    index("idx_folders_vault_id").on(table.vaultId),
+  ]
+);
+
+// 6. Notes Table (with Folders and Nested Subpages)
 export const notes = pgTable(
   "notes",
   {
@@ -83,11 +105,13 @@ export const notes = pgTable(
     userId: varchar("user_id", { length: 128 }).references(() => users.id, {
       onDelete: "set null",
     }),
+    folderId: varchar("folder_id", { length: 128 }).references(() => folders.id, {
+      onDelete: "set null",
+    }),
+    parentId: varchar("parent_id", { length: 128 }),
     title: text("title").notNull(),
     content: text("content").notNull(),
-    folder: text("folder"),
-    tags: jsonb("tags").$type<string[]>().notNull().default([]),
-    links: jsonb("links").$type<string[]>().notNull().default([]),
+    tags: jsonb("tags").$type<string[]>().default([]),
     pinned: boolean("pinned").default(false),
     createdAt: bigint("created_at", { mode: "number" }).notNull(),
     updatedAt: bigint("updated_at", { mode: "number" }).notNull(),
@@ -96,11 +120,14 @@ export const notes = pgTable(
   (table) => [
     index("idx_notes_user_id").on(table.userId),
     index("idx_notes_vault_id").on(table.vaultId),
+    index("idx_notes_folder_id").on(table.folderId),
+    index("idx_notes_parent_id").on(table.parentId),
     index("idx_notes_updated_at").on(table.updatedAt),
   ]
 );
 
 export type User = typeof users.$inferSelect;
 export type Vault = typeof vaults.$inferSelect;
+export type DBFolder = typeof folders.$inferSelect;
 export type DBNote = typeof notes.$inferSelect;
 export type NewDBNote = typeof notes.$inferInsert;

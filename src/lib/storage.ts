@@ -1,7 +1,7 @@
 import { Note } from "@/types/vault";
 import { extractWikilinks, extractTags } from "./markdown";
 
-const VAULT_STORAGE_KEY = "nexus_vault_notes_v1";
+const VAULT_STORAGE_KEY = "nexus_vault_notes_v2";
 
 export const INITIAL_SAMPLE_NOTES: Note[] = [
   {

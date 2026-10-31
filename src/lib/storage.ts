@@ -209,3 +209,47 @@ export function createNewNote(title = "Untitled Note", folder?: string): Note {
     updatedAt: Date.now(),
   };
 }
+
+export async function syncWithCloud(
+  currentNotes: Note[]
+): Promise<{ notes: Note[]; isCloud: boolean }> {
+  if (typeof window === "undefined") {
+    return { notes: currentNotes, isCloud: false };
+  }
+
+  try {
+    const res = await fetch("/api/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notes: currentNotes }),
+    });
+
+    if (!res.ok) {
+      return { notes: currentNotes, isCloud: false };
+    }
+
+    const data = await res.json();
+    if (data.isCloud && Array.isArray(data.notes) && data.notes.length > 0) {
+      saveNotes(data.notes);
+      return { notes: data.notes, isCloud: true };
+    }
+
+    return { notes: currentNotes, isCloud: Boolean(data.isCloud) };
+  } catch (error) {
+    return { notes: currentNotes, isCloud: false };
+  }
+}
+
+let syncTimeout: any = null;
+export function scheduleDebouncedSync(
+  notes: Note[],
+  onComplete?: (updated: Note[], isCloud: boolean) => void
+) {
+  if (typeof window === "undefined") return;
+  if (syncTimeout) clearTimeout(syncTimeout);
+  syncTimeout = setTimeout(async () => {
+    const res = await syncWithCloud(notes);
+    if (onComplete) onComplete(res.notes, res.isCloud);
+  }, 1200);
+}
+

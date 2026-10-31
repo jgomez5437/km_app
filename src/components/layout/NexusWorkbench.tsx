@@ -354,24 +354,34 @@ export const NexusWorkbench: React.FC = () => {
             <span className="truncate">{note.title}</span>
           </div>
 
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+          <div
+            className={`flex items-center gap-0.5 shrink-0 transition ${
+              isActive
+                ? "opacity-100"
+                : "opacity-70 sm:opacity-0 sm:group-hover:opacity-100 hover:opacity-100"
+            }`}
+          >
             {/* Add Subpage button */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 handleCreateSubpage(note.id, note.folderId);
               }}
-              className="p-0.5 text-gray-500 hover:text-purple-300 rounded"
+              className={`p-1 rounded hover:bg-gray-700/60 transition touch-manipulation ${
+                isActive
+                  ? "text-purple-300 hover:text-white"
+                  : "text-gray-400 hover:text-purple-300"
+              }`}
               title="Add Subpage"
             >
-              <Plus className="w-3 h-3" />
+              <Plus className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={(e) => handleDeleteNote(note.id, e)}
-              className="p-0.5 text-gray-500 hover:text-red-400 rounded"
+              className="p-1 text-gray-400 hover:text-red-400 hover:bg-gray-700/60 rounded transition touch-manipulation"
               title="Delete Note"
             >
-              <Trash2 className="w-3 h-3" />
+              <Trash2 className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
@@ -531,23 +541,23 @@ export const NexusWorkbench: React.FC = () => {
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                      <div className="flex items-center gap-0.5 shrink-0 opacity-70 sm:opacity-0 sm:group-hover:opacity-100 hover:opacity-100 transition">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleCreateNewNote("Untitled Note", folder.id);
                           }}
-                          className="p-0.5 text-gray-500 hover:text-purple-300 rounded"
+                          className="p-1 text-gray-400 hover:text-purple-300 hover:bg-gray-700/60 rounded transition touch-manipulation"
                           title="Add Note in Folder"
                         >
-                          <Plus className="w-3 h-3" />
+                          <Plus className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={(e) => handleDeleteFolder(folder.id, e)}
-                          className="p-0.5 text-gray-500 hover:text-red-400 rounded"
+                          className="p-1 text-gray-400 hover:text-red-400 hover:bg-gray-700/60 rounded transition touch-manipulation"
                           title="Delete Folder"
                         >
-                          <Trash2 className="w-3 h-3" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
@@ -558,9 +568,13 @@ export const NexusWorkbench: React.FC = () => {
                         {folderNotes.length > 0 ? (
                           folderNotes.map((note) => renderNoteTreeItem(note, 1))
                         ) : (
-                          <div className="pl-7 py-1 text-[11px] text-gray-600 italic">
-                            Empty folder
-                          </div>
+                          <button
+                            onClick={() => handleCreateNewNote("Untitled Note", folder.id)}
+                            className="flex items-center gap-1.5 pl-7 py-1.5 text-[11px] text-gray-500 hover:text-purple-300 transition text-left w-full touch-manipulation"
+                          >
+                            <Plus className="w-3 h-3" />
+                            <span>Add note to this folder</span>
+                          </button>
                         )}
                       </div>
                     )}
@@ -570,8 +584,15 @@ export const NexusWorkbench: React.FC = () => {
 
               {/* 2. Unfiled Root Notes */}
               <div className="pt-2">
-                <div className="px-2 py-1 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
-                  Notes
+                <div className="px-2 py-1 flex items-center justify-between text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                  <span>Notes</span>
+                  <button
+                    onClick={() => handleCreateNewNote()}
+                    className="p-1 text-gray-500 hover:text-purple-300 rounded hover:bg-gray-800 transition touch-manipulation"
+                    title="New Note"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
                 </div>
                 {notes
                   .filter((n) => !n.folderId && !n.parentId)
@@ -613,28 +634,25 @@ export const NexusWorkbench: React.FC = () => {
 
             {/* Hierarchical Breadcrumb Trail */}
             <div className="flex items-center gap-1.5 text-xs text-gray-400 min-w-0 truncate">
-              <span className="text-gray-500 hidden sm:inline">Vault</span>
-
               {breadcrumbs.map((crumb, i) => (
                 <React.Fragment key={crumb.id || i}>
-                  <span className="text-gray-600 hidden sm:inline">/</span>
                   {crumb.type === "note" && crumb.id ? (
                     <button
                       onClick={() => setActiveNoteId(crumb.id!)}
-                      className="text-purple-400 hover:text-purple-300 font-medium truncate max-w-[100px] hidden sm:inline"
+                      className="text-purple-400 hover:text-purple-300 font-medium truncate max-w-[90px]"
                     >
                       {crumb.label}
                     </button>
                   ) : (
-                    <span className="text-gray-400 font-medium truncate max-w-[100px] hidden sm:inline">
+                    <span className="text-gray-400 font-medium truncate max-w-[90px]">
                       {crumb.label}
                     </span>
                   )}
+                  <span className="text-gray-600">/</span>
                 </React.Fragment>
               ))}
 
-              <span className="text-gray-600">/</span>
-              <span className="text-gray-200 font-semibold truncate max-w-[140px] sm:max-w-xs">
+              <span className="text-gray-400 truncate max-w-[120px] sm:max-w-xs">
                 {activeNote?.title || "No Note"}
               </span>
             </div>
@@ -727,6 +745,17 @@ export const NexusWorkbench: React.FC = () => {
               <Sparkles className="w-3.5 h-3.5 text-purple-400" />
               <span className="hidden md:inline">AI Copilot</span>
             </button>
+
+            {/* Delete Active Note */}
+            {activeNote && (
+              <button
+                onClick={(e) => handleDeleteNote(activeNote.id, e)}
+                className="p-1.5 rounded-md text-gray-400 hover:text-red-400 hover:bg-gray-800 transition touch-manipulation"
+                title="Delete Current Note"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         </header>
 

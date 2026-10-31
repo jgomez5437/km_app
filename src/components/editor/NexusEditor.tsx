@@ -112,18 +112,7 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
 
   return (
     <div className="flex-1 flex flex-col h-full bg-[#0d1117] text-gray-100 overflow-hidden">
-      {/* 1. Single Canonical Title Input */}
-      <div className="px-4 sm:px-8 pt-4 sm:pt-6 pb-3 border-b border-gray-800/80">
-        <input
-          type="text"
-          value={noteTitle}
-          onChange={(e) => onUpdateTitle(e.target.value)}
-          placeholder="Untitled Note..."
-          className="w-full text-xl sm:text-2xl font-bold bg-transparent text-white border-none focus:outline-none placeholder-gray-600 tracking-tight"
-        />
-      </div>
-
-      {/* 2. Formatting Toolbar (Clean, Horizontal Scroll on Mobile) */}
+      {/* 1. Formatting Toolbar / Toolbox (Docked at top) */}
       <div className="px-3 sm:px-8 py-2 bg-[#161b22]/70 border-b border-gray-800/60 flex items-center gap-1 text-gray-400 text-xs overflow-x-auto no-scrollbar flex-nowrap">
         <button
           onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
@@ -223,9 +212,20 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
         </button>
       </div>
 
-      {/* 3. Main Editable Canvas */}
+      {/* 2. Main Editable Canvas */}
       <div className="flex-1 overflow-y-auto custom-scrollbar">
-        <div className="max-w-4xl mx-auto px-4 sm:px-8 py-4 sm:py-6">
+        <div className="max-w-4xl mx-auto px-4 sm:px-8 py-6 sm:py-8">
+          {/* Main Canonical Title Input - Right Above Body */}
+          <div className="mb-4 sm:mb-6">
+            <input
+              type="text"
+              value={noteTitle}
+              onChange={(e) => onUpdateTitle(e.target.value)}
+              placeholder="Untitled Note"
+              className="w-full text-2xl sm:text-3xl md:text-4xl font-extrabold bg-transparent text-white border-none focus:outline-none placeholder-gray-600 tracking-tight"
+            />
+          </div>
+
           <EditorContent editor={editor} />
 
           {/* 4. Hierarchical Subpages Section */}

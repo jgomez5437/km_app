@@ -8,6 +8,8 @@ import {
   createNewNote,
   updateNoteInVault,
   INITIAL_SAMPLE_NOTES,
+  syncWithCloud,
+  scheduleDebouncedSync,
 } from "@/lib/storage";
 import { getIncomingBacklinks } from "@/lib/markdown";
 import { NexusEditor } from "@/components/editor/NexusEditor";
@@ -30,6 +32,9 @@ import {
   Maximize2,
   FolderTree,
   BookOpen,
+  Cloud,
+  CloudOff,
+  RefreshCw,
 } from "lucide-react";
 
 export const NexusWorkbench: React.FC = () => {
@@ -42,14 +47,27 @@ export const NexusWorkbench: React.FC = () => {
   const [sidebarTab, setSidebarTab] = useState<"notes" | "tags">("notes");
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [syncStatus, setSyncStatus] = useState<"synced" | "syncing" | "offline">("offline");
+  const [isCloudConfigured, setIsCloudConfigured] = useState(false);
 
-  // Load from local storage on mount
+  // Load from local storage and sync with Neon on mount
   useEffect(() => {
     const loaded = loadNotes();
     setNotes(loaded);
     if (loaded.length > 0 && !loaded.some((n) => n.id === activeNoteId)) {
       setActiveNoteId(loaded[0].id);
     }
+
+    setSyncStatus("syncing");
+    syncWithCloud(loaded).then((res) => {
+      setIsCloudConfigured(res.isCloud);
+      if (res.isCloud) {
+        setNotes(res.notes);
+        setSyncStatus("synced");
+      } else {
+        setSyncStatus("offline");
+      }
+    });
   }, []);
 
   // Global Ctrl+K shortcut listener
@@ -99,6 +117,29 @@ export const NexusWorkbench: React.FC = () => {
     }
   };
 
+  const triggerSync = (currentNotes: Note[]) => {
+    setSyncStatus("syncing");
+    scheduleDebouncedSync(currentNotes, (syncedNotes, isCloud) => {
+      setIsCloudConfigured(isCloud);
+      if (isCloud && syncedNotes.length > 0) {
+        setNotes(syncedNotes);
+      }
+      setSyncStatus(isCloud ? "synced" : "offline");
+    });
+  };
+
+  const handleManualSync = async () => {
+    setSyncStatus("syncing");
+    const res = await syncWithCloud(notes);
+    setIsCloudConfigured(res.isCloud);
+    if (res.isCloud) {
+      setNotes(res.notes);
+      setSyncStatus("synced");
+    } else {
+      setSyncStatus("offline");
+    }
+  };
+
   const handleCreateNewNote = (title?: string) => {
     const newNote = createNewNote(title || "Untitled Note");
     const updated = [newNote, ...notes];
@@ -106,6 +147,7 @@ export const NexusWorkbench: React.FC = () => {
     saveNotes(updated);
     setActiveNoteId(newNote.id);
     if (viewMode === "graph") setViewMode("editor");
+    triggerSync(updated);
   };
 
   const handleDeleteNote = (id: string, e: React.MouseEvent) => {
@@ -121,6 +163,9 @@ export const NexusWorkbench: React.FC = () => {
       if (activeNoteId === id) {
         setActiveNoteId(remaining[0].id);
       }
+      triggerSync(remaining);
+      // Also delete from remote if cloud is active
+      fetch(`/api/notes/${id}`, { method: "DELETE" }).catch(() => {});
     }
   };
 
@@ -128,12 +173,14 @@ export const NexusWorkbench: React.FC = () => {
     if (!activeNote) return;
     const updated = updateNoteInVault({ id: activeNote.id, title: newTitle }, notes);
     setNotes(updated);
+    triggerSync(updated);
   };
 
   const handleUpdateContent = (newContent: string) => {
     if (!activeNote) return;
     const updated = updateNoteInVault({ id: activeNote.id, content: newContent }, notes);
     setNotes(updated);
+    triggerSync(updated);
   };
 
   const handleInsertWikilink = (targetTitle: string) => {
@@ -361,8 +408,42 @@ export const NexusWorkbench: React.FC = () => {
             </button>
           </div>
 
-          {/* Right Drawer Toggle Controls */}
+          {/* Right Drawer Toggle Controls & Sync Status */}
           <div className="flex items-center gap-1.5">
+            {/* Cloud Sync Status Indicator */}
+            <button
+              onClick={handleManualSync}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs transition border ${
+                syncStatus === "syncing"
+                  ? "bg-amber-950/40 text-amber-300 border-amber-800/50"
+                  : isCloudConfigured
+                  ? "bg-emerald-950/40 text-emerald-300 border-emerald-800/50 hover:bg-emerald-900/40"
+                  : "bg-gray-800/40 text-gray-400 border-gray-800 hover:text-white"
+              }`}
+              title={
+                isCloudConfigured
+                  ? "Connected to Neon Database (Click to force sync)"
+                  : "Local-only mode. Set DATABASE_URL in Vercel to activate Neon sync."
+              }
+            >
+              {syncStatus === "syncing" ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-400" />
+                  <span className="hidden lg:inline">Syncing...</span>
+                </>
+              ) : isCloudConfigured ? (
+                <>
+                  <Cloud className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="hidden lg:inline">Cloud Synced</span>
+                </>
+              ) : (
+                <>
+                  <CloudOff className="w-3.5 h-3.5 text-gray-500" />
+                  <span className="hidden lg:inline">Local Vault</span>
+                </>
+              )}
+            </button>
+
             <button
               onClick={() => {
                 if (isRightDrawerOpen && rightTab === "ai") {

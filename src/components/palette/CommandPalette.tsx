@@ -56,7 +56,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const filteredNotes = notes.filter(
     (n) =>
       n.title.toLowerCase().includes(query.toLowerCase()) ||
-      n.tags.some((t) => t.toLowerCase().includes(query.toLowerCase()))
+      (n.tags || []).some((t) => t.toLowerCase().includes(query.toLowerCase()))
   );
 
   const exactMatch = notes.some(
@@ -142,8 +142,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-gray-200 truncate">{note.title}</div>
                   <div className="text-gray-400 text-[11px] flex items-center gap-2">
-                    <span>{note.links.length} links</span>
-                    {note.tags.length > 0 && (
+                    {note.parentId && <span className="text-emerald-400">Subpage</span>}
+                    {note.tags && note.tags.length > 0 && (
                       <span>#{note.tags.join(" #")}</span>
                     )}
                   </div>

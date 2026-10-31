@@ -1,10 +1,10 @@
 export interface Note {
   id: string;
   title: string;
-  content: string; // Markdown or HTML representation
-  folder?: string;
-  tags: string[];
-  links: string[]; // IDs or titles of referenced notes
+  content: string; // Markdown representation
+  folderId?: string; // Optional parent folder ID
+  parentId?: string; // Optional parent note ID for nested subpages
+  tags?: string[];
   createdAt: number;
   updatedAt: number;
   pinned?: boolean;
@@ -13,14 +13,16 @@ export interface Note {
 export interface Folder {
   id: string;
   name: string;
-  parentId?: string;
+  color?: string;
+  createdAt?: number;
 }
 
 export interface GraphNode {
   id: string;
   title: string;
-  val: number; // Node size based on link connections
-  group: string; // e.g. folder or primary tag
+  val: number; // Node size
+  group: string;
+  nodeType?: 'folder' | 'note' | 'subpage';
   x?: number;
   y?: number;
   vx?: number;
@@ -30,12 +32,6 @@ export interface GraphNode {
 export interface GraphLink {
   source: string;
   target: string;
-}
-
-export interface BacklinkItem {
-  noteId: string;
-  noteTitle: string;
-  contextSnippet: string;
 }
 
 export interface AISettings {

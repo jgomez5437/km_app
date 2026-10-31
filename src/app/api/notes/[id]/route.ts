@@ -47,9 +47,9 @@ export async function PUT(req: Request, { params }: Params) {
       .set({
         title: body.title,
         content: body.content,
-        folder: body.folder !== undefined ? body.folder : undefined,
+        folderId: body.folderId !== undefined ? body.folderId : undefined,
+        parentId: body.parentId !== undefined ? body.parentId : undefined,
         tags: body.tags !== undefined ? body.tags : undefined,
-        links: body.links !== undefined ? body.links : undefined,
         pinned: body.pinned !== undefined ? Boolean(body.pinned) : undefined,
         updatedAt: body.updatedAt || Date.now(),
         syncedAt: new Date(),

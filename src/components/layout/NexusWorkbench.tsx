@@ -22,33 +22,41 @@ import {
   Share2,
   Columns,
   Sparkles,
-  Link as LinkIcon,
   Search,
   Hash,
-  ChevronLeft,
-  ChevronRight,
-  Pin,
   Trash2,
-  Maximize2,
   FolderTree,
-  BookOpen,
   Cloud,
   CloudOff,
   RefreshCw,
+  Menu,
+  X,
 } from "lucide-react";
 
 export const NexusWorkbench: React.FC = () => {
   const [notes, setNotes] = useState<Note[]>(INITIAL_SAMPLE_NOTES);
   const [activeNoteId, setActiveNoteId] = useState<string>("welcome-to-nexus");
-  const [viewMode, setViewMode] = useState<"editor" | "split" | "graph">("split");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isRightDrawerOpen, setIsRightDrawerOpen] = useState(true);
-  const [rightTab, setRightTab] = useState<"backlinks" | "ai">("ai");
+  const [viewMode, setViewMode] = useState<"editor" | "split" | "graph">("editor");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isRightDrawerOpen, setIsRightDrawerOpen] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<"notes" | "tags">("notes");
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [syncStatus, setSyncStatus] = useState<"synced" | "syncing" | "offline">("offline");
   const [isCloudConfigured, setIsCloudConfigured] = useState(false);
+
+  // Responsive default layout: open sidebar & split on desktop, clean single-pane on mobile
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (window.innerWidth >= 768) {
+        setIsSidebarOpen(true);
+        setViewMode("split");
+      } else {
+        setIsSidebarOpen(false);
+        setViewMode("editor");
+      }
+    }
+  }, []);
 
   // Load from local storage and sync with Neon on mount
   useEffect(() => {
@@ -70,7 +78,7 @@ export const NexusWorkbench: React.FC = () => {
     });
   }, []);
 
-  // Global Ctrl+K shortcut listener
+  // Global Ctrl+K / Ctrl+N shortcut listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
@@ -88,7 +96,7 @@ export const NexusWorkbench: React.FC = () => {
 
   const activeNote = notes.find((n) => n.id === activeNoteId) || notes[0];
 
-  // Incoming backlinks for active note
+  // Incoming backlinks for active note (passed cleanly into document)
   const incomingBacklinks = React.useMemo(() => {
     if (!activeNote) return [];
     return getIncomingBacklinks(activeNote, notes);
@@ -102,20 +110,6 @@ export const NexusWorkbench: React.FC = () => {
     });
     return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
   }, [notes]);
-
-  // Handle note selection (or create if target doesn't exist)
-  const handleSelectNoteByTitle = (title: string) => {
-    const found = notes.find((n) => n.title.toLowerCase() === title.toLowerCase());
-    if (found) {
-      setActiveNoteId(found.id);
-    } else {
-      const newNote = createNewNote(title);
-      const updated = [newNote, ...notes];
-      setNotes(updated);
-      saveNotes(updated);
-      setActiveNoteId(newNote.id);
-    }
-  };
 
   const triggerSync = (currentNotes: Note[]) => {
     setSyncStatus("syncing");
@@ -140,13 +134,29 @@ export const NexusWorkbench: React.FC = () => {
     }
   };
 
+  const handleSelectNoteByTitle = (title: string) => {
+    const found = notes.find((n) => n.title.toLowerCase() === title.toLowerCase());
+    if (found) {
+      setActiveNoteId(found.id);
+    } else {
+      const newNote = createNewNote(title);
+      const updated = [newNote, ...notes];
+      setNotes(updated);
+      saveNotes(updated);
+      setActiveNoteId(newNote.id);
+      triggerSync(updated);
+    }
+  };
+
   const handleCreateNewNote = (title?: string) => {
     const newNote = createNewNote(title || "Untitled Note");
     const updated = [newNote, ...notes];
     setNotes(updated);
     saveNotes(updated);
     setActiveNoteId(newNote.id);
-    if (viewMode === "graph") setViewMode("editor");
+    if (viewMode === "graph") {
+      setViewMode(typeof window !== "undefined" && window.innerWidth < 640 ? "editor" : "split");
+    }
     triggerSync(updated);
   };
 
@@ -164,7 +174,6 @@ export const NexusWorkbench: React.FC = () => {
         setActiveNoteId(remaining[0].id);
       }
       triggerSync(remaining);
-      // Also delete from remote if cloud is active
       fetch(`/api/notes/${id}`, { method: "DELETE" }).catch(() => {});
     }
   };
@@ -197,173 +206,201 @@ export const NexusWorkbench: React.FC = () => {
   );
 
   return (
-    <div className="flex h-screen w-screen bg-[#0d1117] text-gray-100 overflow-hidden font-sans">
-      {/* 1. Left Sidebar: Vault Navigator */}
+    <div className="flex h-screen w-screen bg-[#0d1117] text-gray-100 overflow-hidden font-sans relative">
+      {/* 1. Mobile Backdrop for Sidebar Drawer */}
       {isSidebarOpen && (
-        <aside className="w-64 flex-shrink-0 bg-[#161b22] border-r border-gray-800 flex flex-col h-full z-20">
-          {/* Vault Header */}
-          <div className="px-4 py-3.5 border-b border-gray-800 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-md bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center font-bold text-xs text-white shadow-md">
-                N
-              </div>
-              <span className="font-semibold text-sm tracking-tight text-gray-100">
-                Nexus Vault
-              </span>
+        <div
+          onClick={() => setIsSidebarOpen(false)}
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-30 md:hidden"
+        />
+      )}
+
+      {/* 2. Left Sidebar: Vault Navigator */}
+      <aside
+        className={`fixed md:static inset-y-0 left-0 z-40 w-72 md:w-64 flex-shrink-0 bg-[#161b22] border-r border-gray-800 flex flex-col h-full transition-transform duration-200 ease-in-out ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full md:hidden"
+        }`}
+      >
+        {/* Vault Header */}
+        <div className="px-4 py-3.5 border-b border-gray-800 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center font-bold text-xs text-white shadow-md">
+              N
             </div>
+            <span className="font-semibold text-sm tracking-tight text-gray-100">
+              Nexus Vault
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
             <button
-              onClick={() => handleCreateNewNote()}
+              onClick={() => {
+                handleCreateNewNote();
+                if (typeof window !== "undefined" && window.innerWidth < 768) {
+                  setIsSidebarOpen(false);
+                }
+              }}
               className="p-1 rounded-md bg-purple-600/80 hover:bg-purple-600 text-white transition shadow-sm"
-              title="Create new note (Ctrl+N)"
+              title="Create new note"
             >
               <Plus className="w-4 h-4" />
             </button>
-          </div>
-
-          {/* Search bar inside sidebar */}
-          <div className="px-3 pt-2.5 pb-1">
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#0d1117] rounded-lg border border-gray-800 text-xs">
-              <Search className="w-3.5 h-3.5 text-gray-500" />
-              <input
-                type="text"
-                placeholder="Search notes or tags..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-transparent border-none text-gray-200 focus:outline-none w-full text-xs placeholder-gray-500"
-              />
-            </div>
-          </div>
-
-          {/* Sidebar Tab Selector */}
-          <div className="flex items-center px-3 py-1.5 gap-2 border-b border-gray-800/80 text-[11px] text-gray-400">
             <button
-              onClick={() => setSidebarTab("notes")}
-              className={`flex items-center gap-1 pb-0.5 border-b-2 transition ${
-                sidebarTab === "notes"
-                  ? "border-purple-500 text-purple-300 font-medium"
-                  : "border-transparent hover:text-gray-200"
-              }`}
+              onClick={() => setIsSidebarOpen(false)}
+              className="p-1 rounded-md text-gray-400 hover:text-white md:hidden"
+              title="Close Menu"
             >
-              <FolderTree className="w-3.5 h-3.5" />
-              <span>Notes ({notes.length})</span>
-            </button>
-            <button
-              onClick={() => setSidebarTab("tags")}
-              className={`flex items-center gap-1 pb-0.5 border-b-2 transition ${
-                sidebarTab === "tags"
-                  ? "border-purple-500 text-purple-300 font-medium"
-                  : "border-transparent hover:text-gray-200"
-              }`}
-            >
-              <Hash className="w-3.5 h-3.5" />
-              <span>Tags ({tagCounts.length})</span>
+              <X className="w-4 h-4" />
             </button>
           </div>
+        </div>
 
-          {/* Notes or Tags List */}
-          <div className="flex-1 overflow-y-auto p-2 space-y-0.5 text-xs custom-scrollbar">
-            {sidebarTab === "notes" ? (
-              filteredNotes.map((note) => {
-                const isActive = note.id === activeNoteId;
-                return (
-                  <div
-                    key={note.id}
-                    onClick={() => {
-                      setActiveNoteId(note.id);
-                      if (viewMode === "graph") setViewMode("split");
-                    }}
-                    className={`group flex items-center justify-between px-2.5 py-1.5 rounded-md cursor-pointer transition ${
-                      isActive
-                        ? "bg-purple-950/60 text-purple-200 border border-purple-800/40"
-                        : "text-gray-300 hover:bg-[#1f242c]"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <FileText
-                        className={`w-3.5 h-3.5 flex-shrink-0 ${
-                          isActive ? "text-purple-400" : "text-gray-500"
-                        }`}
-                      />
-                      <span className="truncate">{note.title}</span>
-                    </div>
+        {/* Search bar inside sidebar */}
+        <div className="px-3 pt-2.5 pb-1">
+          <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#0d1117] rounded-lg border border-gray-800 text-xs">
+            <Search className="w-3.5 h-3.5 text-gray-500" />
+            <input
+              type="text"
+              placeholder="Search notes or tags..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-transparent border-none text-gray-200 focus:outline-none w-full text-xs placeholder-gray-500"
+            />
+          </div>
+        </div>
 
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
-                      {note.links.length > 0 && (
-                        <span className="text-[10px] text-gray-500 px-1 rounded bg-gray-800/60">
-                          {note.links.length}
-                        </span>
-                      )}
-                      <button
-                        onClick={(e) => handleDeleteNote(note.id, e)}
-                        className="p-0.5 text-gray-500 hover:text-red-400 rounded"
-                        title="Delete note"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
+        {/* Sidebar Tab Selector */}
+        <div className="flex items-center px-3 py-1.5 gap-2 border-b border-gray-800/80 text-[11px] text-gray-400">
+          <button
+            onClick={() => setSidebarTab("notes")}
+            className={`flex items-center gap-1 pb-0.5 border-b-2 transition ${
+              sidebarTab === "notes"
+                ? "border-purple-500 text-purple-300 font-medium"
+                : "border-transparent hover:text-gray-200"
+            }`}
+          >
+            <FolderTree className="w-3.5 h-3.5" />
+            <span>Notes ({notes.length})</span>
+          </button>
+          <button
+            onClick={() => setSidebarTab("tags")}
+            className={`flex items-center gap-1 pb-0.5 border-b-2 transition ${
+              sidebarTab === "tags"
+                ? "border-purple-500 text-purple-300 font-medium"
+                : "border-transparent hover:text-gray-200"
+            }`}
+          >
+            <Hash className="w-3.5 h-3.5" />
+            <span>Tags ({tagCounts.length})</span>
+          </button>
+        </div>
+
+        {/* Notes or Tags List */}
+        <div className="flex-1 overflow-y-auto p-2 space-y-0.5 text-xs custom-scrollbar">
+          {sidebarTab === "notes" ? (
+            filteredNotes.map((note) => {
+              const isActive = note.id === activeNoteId;
+              return (
+                <div
+                  key={note.id}
+                  onClick={() => {
+                    setActiveNoteId(note.id);
+                    if (viewMode === "graph") {
+                      setViewMode(typeof window !== "undefined" && window.innerWidth < 640 ? "editor" : "split");
+                    }
+                    if (typeof window !== "undefined" && window.innerWidth < 768) {
+                      setIsSidebarOpen(false);
+                    }
+                  }}
+                  className={`group flex items-center justify-between px-2.5 py-1.5 rounded-md cursor-pointer transition ${
+                    isActive
+                      ? "bg-purple-950/60 text-purple-200 border border-purple-800/40"
+                      : "text-gray-300 hover:bg-[#1f242c]"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <FileText
+                      className={`w-3.5 h-3.5 flex-shrink-0 ${
+                        isActive ? "text-purple-400" : "text-gray-500"
+                      }`}
+                    />
+                    <span className="truncate">{note.title}</span>
                   </div>
-                );
-              })
-            ) : (
-              <div className="space-y-1 p-1">
-                {tagCounts.map(([tag, count]) => (
-                  <button
-                    key={tag}
-                    onClick={() => setSearchQuery(tag)}
-                    className="w-full flex items-center justify-between px-2 py-1 rounded text-gray-300 hover:bg-gray-800 transition text-left"
-                  >
-                    <div className="flex items-center gap-1.5 text-purple-400">
-                      <Hash className="w-3 h-3" />
-                      <span className="text-gray-200">{tag}</span>
-                    </div>
-                    <span className="text-[10px] text-gray-500 bg-gray-800 px-1.5 py-0.5 rounded-full">
-                      {count}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
 
-          {/* Quick Command Palette Button */}
-          <div className="p-3 border-t border-gray-800 bg-[#0d1117]/60">
-            <button
-              onClick={() => setIsPaletteOpen(true)}
-              className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-[#161b22] border border-gray-800 text-gray-400 hover:text-white transition text-xs"
-            >
-              <div className="flex items-center gap-2">
-                <Search className="w-3.5 h-3.5" />
-                <span>Command Palette</span>
-              </div>
-              <kbd className="px-1.5 py-0.5 text-[10px] bg-gray-800 rounded border border-gray-700">
-                Ctrl+K
-              </kbd>
-            </button>
-          </div>
-        </aside>
-      )}
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                    {note.links.length > 0 && (
+                      <span className="text-[10px] text-gray-500 px-1 rounded bg-gray-800/60">
+                        {note.links.length}
+                      </span>
+                    )}
+                    <button
+                      onClick={(e) => handleDeleteNote(note.id, e)}
+                      className="p-0.5 text-gray-500 hover:text-red-400 rounded"
+                      title="Delete note"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="space-y-1 p-1">
+              {tagCounts.map(([tag, count]) => (
+                <button
+                  key={tag}
+                  onClick={() => {
+                    setSearchQuery(tag);
+                    setSidebarTab("notes");
+                  }}
+                  className="w-full flex items-center justify-between px-2 py-1 rounded text-gray-300 hover:bg-gray-800 transition text-left"
+                >
+                  <div className="flex items-center gap-1.5 text-purple-400">
+                    <Hash className="w-3 h-3" />
+                    <span className="text-gray-200">{tag}</span>
+                  </div>
+                  <span className="text-[10px] text-gray-500 bg-gray-800 px-1.5 py-0.5 rounded-full">
+                    {count}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
-      {/* 2. Main Workbench Canvas */}
+        {/* Quick Command Palette Button */}
+        <div className="p-3 border-t border-gray-800 bg-[#0d1117]/60">
+          <button
+            onClick={() => setIsPaletteOpen(true)}
+            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-[#161b22] border border-gray-800 text-gray-400 hover:text-white transition text-xs"
+          >
+            <div className="flex items-center gap-2">
+              <Search className="w-3.5 h-3.5" />
+              <span>Search / Commands</span>
+            </div>
+            <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] bg-gray-800 rounded border border-gray-700">
+              Ctrl+K
+            </kbd>
+          </button>
+        </div>
+      </aside>
+
+      {/* 3. Main Workbench Canvas */}
       <main className="flex-1 flex flex-col h-full overflow-hidden">
         {/* Top Workbench Control Bar */}
-        <header className="h-12 border-b border-gray-800 bg-[#161b22] px-4 flex items-center justify-between z-10 flex-shrink-0">
-          <div className="flex items-center gap-3">
+        <header className="h-12 border-b border-gray-800 bg-[#161b22] px-3 sm:px-4 flex items-center justify-between z-10 flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="p-1.5 rounded hover:bg-gray-800 text-gray-400 hover:text-white transition"
-              title={isSidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
+              className="p-1.5 rounded-md hover:bg-gray-800 text-gray-400 hover:text-white transition touch-manipulation"
+              title="Toggle Menu"
             >
-              {isSidebarOpen ? (
-                <ChevronLeft className="w-4 h-4" />
-              ) : (
-                <ChevronRight className="w-4 h-4" />
-              )}
+              <Menu className="w-4 h-4" />
             </button>
-            <div className="flex items-center gap-1.5 text-xs text-gray-400">
-              <span className="text-gray-500">Vault</span>
-              <span>/</span>
-              <span className="text-gray-200 font-medium truncate max-w-xs">
-                {activeNote?.title || "No Note Selected"}
+            <div className="flex items-center gap-1.5 text-xs text-gray-400 min-w-0">
+              <span className="text-gray-500 hidden sm:inline">Vault</span>
+              <span className="hidden sm:inline">/</span>
+              <span className="text-gray-200 font-medium truncate max-w-[130px] sm:max-w-xs">
+                {activeNote?.title || "No Note"}
               </span>
             </div>
           </div>
@@ -382,17 +419,18 @@ export const NexusWorkbench: React.FC = () => {
               <FileText className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Editor</span>
             </button>
+            {/* Split view hidden on small screens */}
             <button
               onClick={() => setViewMode("split")}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs transition ${
+              className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded text-xs transition ${
                 viewMode === "split"
                   ? "bg-purple-900/60 text-purple-200 font-medium"
                   : "text-gray-400 hover:text-white"
               }`}
-              title="Split View (Editor + Live Graph)"
+              title="Split View"
             >
               <Columns className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Split</span>
+              <span>Split</span>
             </button>
             <button
               onClick={() => setViewMode("graph")}
@@ -401,19 +439,19 @@ export const NexusWorkbench: React.FC = () => {
                   ? "bg-purple-900/60 text-purple-200 font-medium"
                   : "text-gray-400 hover:text-white"
               }`}
-              title="Full Knowledge Graph View"
+              title="Knowledge Graph View"
             >
               <Share2 className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Graph</span>
             </button>
           </div>
 
-          {/* Right Drawer Toggle Controls & Sync Status */}
-          <div className="flex items-center gap-1.5">
-            {/* Cloud Sync Status Indicator */}
+          {/* Right Controls */}
+          <div className="flex items-center gap-1 sm:gap-1.5">
+            {/* Minimalist Cloud Sync Icon */}
             <button
               onClick={handleManualSync}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs transition border ${
+              className={`p-1.5 sm:px-2.5 sm:py-1 rounded-md text-xs transition border flex items-center gap-1.5 ${
                 syncStatus === "syncing"
                   ? "bg-amber-950/40 text-amber-300 border-amber-800/50"
                   : isCloudConfigured
@@ -422,39 +460,27 @@ export const NexusWorkbench: React.FC = () => {
               }`}
               title={
                 isCloudConfigured
-                  ? "Connected to Neon Database (Click to force sync)"
-                  : "Local-only mode. Set DATABASE_URL in Vercel to activate Neon sync."
+                  ? "Connected to Neon Database (Tap to force sync)"
+                  : "Local storage mode."
               }
             >
               {syncStatus === "syncing" ? (
-                <>
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-400" />
-                  <span className="hidden lg:inline">Syncing...</span>
-                </>
+                <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-400" />
               ) : isCloudConfigured ? (
-                <>
-                  <Cloud className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="hidden lg:inline">Cloud Synced</span>
-                </>
+                <Cloud className="w-3.5 h-3.5 text-emerald-400" />
               ) : (
-                <>
-                  <CloudOff className="w-3.5 h-3.5 text-gray-500" />
-                  <span className="hidden lg:inline">Local Vault</span>
-                </>
+                <CloudOff className="w-3.5 h-3.5 text-gray-500" />
               )}
+              <span className="hidden md:inline">
+                {syncStatus === "syncing" ? "Syncing" : isCloudConfigured ? "Synced" : "Local"}
+              </span>
             </button>
 
+            {/* AI Assistant Toggle */}
             <button
-              onClick={() => {
-                if (isRightDrawerOpen && rightTab === "ai") {
-                  setIsRightDrawerOpen(false);
-                } else {
-                  setIsRightDrawerOpen(true);
-                  setRightTab("ai");
-                }
-              }}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs transition border ${
-                isRightDrawerOpen && rightTab === "ai"
+              onClick={() => setIsRightDrawerOpen(!isRightDrawerOpen)}
+              className={`flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1 rounded-md text-xs transition border ${
+                isRightDrawerOpen
                   ? "bg-purple-950/60 text-purple-300 border-purple-800/60"
                   : "bg-gray-800/40 text-gray-400 border-gray-800 hover:text-white"
               }`}
@@ -463,33 +489,11 @@ export const NexusWorkbench: React.FC = () => {
               <Sparkles className="w-3.5 h-3.5 text-purple-400" />
               <span className="hidden md:inline">AI Copilot</span>
             </button>
-
-            <button
-              onClick={() => {
-                if (isRightDrawerOpen && rightTab === "backlinks") {
-                  setIsRightDrawerOpen(false);
-                } else {
-                  setIsRightDrawerOpen(true);
-                  setRightTab("backlinks");
-                }
-              }}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs transition border ${
-                isRightDrawerOpen && rightTab === "backlinks"
-                  ? "bg-purple-950/60 text-purple-300 border-purple-800/60"
-                  : "bg-gray-800/40 text-gray-400 border-gray-800 hover:text-white"
-              }`}
-              title="Toggle Backlinks"
-            >
-              <LinkIcon className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">
-                Backlinks ({incomingBacklinks.length})
-              </span>
-            </button>
           </div>
         </header>
 
         {/* View Container */}
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex overflow-hidden relative">
           {/* Main workspace panes */}
           <div className="flex-1 flex overflow-hidden">
             {/* Left Pane (Editor) */}
@@ -505,6 +509,7 @@ export const NexusWorkbench: React.FC = () => {
                   onUpdateTitle={handleUpdateTitle}
                   onUpdateContent={handleUpdateContent}
                   onOpenWikilink={handleSelectNoteByTitle}
+                  incomingBacklinks={incomingBacklinks}
                 />
               </div>
             )}
@@ -521,72 +526,71 @@ export const NexusWorkbench: React.FC = () => {
                   activeNoteId={activeNoteId}
                   onSelectNote={(id) => {
                     setActiveNoteId(id);
-                    if (viewMode === "graph") setViewMode("split");
+                    if (viewMode === "graph") {
+                      setViewMode(typeof window !== "undefined" && window.innerWidth < 640 ? "editor" : "split");
+                    }
                   }}
                 />
               </div>
             )}
           </div>
 
-          {/* 3. Right Inspector Drawer */}
+          {/* 4. AI Copilot Drawer (Responsive Modal on Mobile, Side Panel on Desktop) */}
           {isRightDrawerOpen && activeNote && (
-            <aside className="w-80 flex-shrink-0 bg-[#161b22] border-l border-gray-800 flex flex-col h-full z-20">
-              {rightTab === "ai" ? (
-                <NexusAIAssistant
-                  activeNote={activeNote}
-                  allNotes={notes}
-                  onOpenNote={(id) => setActiveNoteId(id)}
-                  onInsertWikilink={handleInsertWikilink}
-                />
-              ) : (
-                <div className="flex flex-col h-full text-xs">
-                  {/* Backlinks Header */}
-                  <div className="px-4 py-3 border-b border-gray-800 bg-[#0d1117]/60 flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-gray-200 font-medium">
-                      <LinkIcon className="w-4 h-4 text-purple-400" />
-                      <span>Incoming Backlinks ({incomingBacklinks.length})</span>
-                    </div>
-                  </div>
-
-                  {/* Backlinks List */}
-                  <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                    {incomingBacklinks.length === 0 ? (
-                      <div className="text-gray-500 text-center py-6">
-                        No incoming backlinks yet. Reference this note with{" "}
-                        <code className="text-purple-400">[[{activeNote.title}]]</code> in other notes.
-                      </div>
-                    ) : (
-                      incomingBacklinks.map((bl) => (
-                        <div
-                          key={bl.noteId}
-                          onClick={() => setActiveNoteId(bl.noteId)}
-                          className="p-2.5 rounded bg-[#0d1117] border border-gray-800 hover:border-purple-600/50 cursor-pointer transition space-y-1"
-                        >
-                          <div className="font-medium text-purple-300">
-                            [[{bl.noteTitle}]]
-                          </div>
-                          <div className="text-[11px] text-gray-400 line-clamp-2">
-                            {bl.contextSnippet}
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
+            <>
+              {/* Mobile backdrop for AI Drawer */}
+              <div
+                onClick={() => setIsRightDrawerOpen(false)}
+                className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 md:hidden"
+              />
+              <aside className="fixed md:static inset-y-0 right-0 z-50 w-full sm:w-80 flex-shrink-0 bg-[#161b22] border-l border-gray-800 flex flex-col h-full shadow-2xl md:shadow-none">
+                <div className="flex items-center justify-between px-3 py-2 border-b border-gray-800 bg-[#0d1117]/60 md:hidden">
+                  <span className="text-xs font-medium text-gray-200">AI Copilot</span>
+                  <button
+                    onClick={() => setIsRightDrawerOpen(false)}
+                    className="p-1 text-gray-400 hover:text-white"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
-              )}
-            </aside>
+                <div className="flex-1 overflow-hidden">
+                  <NexusAIAssistant
+                    activeNote={activeNote}
+                    allNotes={notes}
+                    onOpenNote={(id) => {
+                      setActiveNoteId(id);
+                      if (typeof window !== "undefined" && window.innerWidth < 768) {
+                        setIsRightDrawerOpen(false);
+                      }
+                    }}
+                    onInsertWikilink={handleInsertWikilink}
+                  />
+                </div>
+              </aside>
+            </>
           )}
         </div>
       </main>
 
-      {/* Global Command Palette Modal */}
+      {/* 5. Mobile Floating Action Button (FAB) for Quick Note Creation */}
+      <button
+        onClick={() => handleCreateNewNote()}
+        className="md:hidden fixed bottom-5 right-5 z-20 w-12 h-12 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 text-white shadow-xl shadow-purple-950/50 flex items-center justify-center active:scale-95 transition"
+        title="Create new note"
+      >
+        <Plus className="w-5 h-5" />
+      </button>
+
+      {/* 6. Global Command Palette Modal */}
       <CommandPalette
         isOpen={isPaletteOpen}
         onClose={() => setIsPaletteOpen(false)}
         notes={notes}
         onSelectNote={(id) => {
           setActiveNoteId(id);
-          if (viewMode === "graph") setViewMode("split");
+          if (viewMode === "graph") {
+            setViewMode(typeof window !== "undefined" && window.innerWidth < 640 ? "editor" : "split");
+          }
         }}
         onCreateNote={handleCreateNewNote}
         onOpenGraph={() => setViewMode("graph")}

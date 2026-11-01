@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getDb, isDatabaseConfigured } from "@/db";
 import { notes } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
+import { getSessionUser } from "@/lib/auth";
 
 interface Params {
   params: Promise<{ id: string }>;
@@ -13,11 +14,16 @@ export async function GET(req: Request, { params }: Params) {
   }
 
   try {
+    const session = await getSessionUser();
     const { id } = await params;
     const db = getDb();
     if (!db) throw new Error("Database client unavailable");
 
-    const found = await db.select().from(notes).where(eq(notes.id, id)).limit(1);
+    const condition = session
+      ? and(eq(notes.id, id), eq(notes.userId, session.userId))
+      : eq(notes.id, id);
+
+    const found = await db.select().from(notes).where(condition).limit(1);
     if (found.length === 0) {
       return NextResponse.json({ error: "Note not found" }, { status: 404 });
     }
@@ -37,10 +43,15 @@ export async function PUT(req: Request, { params }: Params) {
   }
 
   try {
+    const session = await getSessionUser();
     const { id } = await params;
     const body = await req.json();
     const db = getDb();
     if (!db) throw new Error("Database client unavailable");
+
+    const condition = session
+      ? and(eq(notes.id, id), eq(notes.userId, session.userId))
+      : eq(notes.id, id);
 
     const updated = await db
       .update(notes)
@@ -54,8 +65,12 @@ export async function PUT(req: Request, { params }: Params) {
         updatedAt: body.updatedAt || Date.now(),
         syncedAt: new Date(),
       })
-      .where(eq(notes.id, id))
+      .where(condition)
       .returning();
+
+    if (updated.length === 0) {
+      return NextResponse.json({ error: "Note not found or unauthorized" }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true, note: updated[0] });
   } catch (error: any) {
@@ -72,11 +87,16 @@ export async function DELETE(req: Request, { params }: Params) {
   }
 
   try {
+    const session = await getSessionUser();
     const { id } = await params;
     const db = getDb();
     if (!db) throw new Error("Database client unavailable");
 
-    await db.delete(notes).where(eq(notes.id, id));
+    const condition = session
+      ? and(eq(notes.id, id), eq(notes.userId, session.userId))
+      : eq(notes.id, id);
+
+    await db.delete(notes).where(condition);
 
     return NextResponse.json({ success: true, deletedId: id });
   } catch (error: any) {

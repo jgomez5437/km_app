@@ -40,3 +40,9 @@ export interface AISettings {
   endpoint?: string;
   model: string;
 }
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+}

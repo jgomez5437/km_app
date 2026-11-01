@@ -1,4 +1,4 @@
-import { Note, Folder } from "@/types/vault";
+import { Note, Folder, AuthUser } from "@/types/vault";
 
 const VAULT_STORAGE_KEY = "nexus_vault_notes_v3";
 const FOLDERS_STORAGE_KEY = "nexus_vault_folders_v3";
@@ -188,44 +188,65 @@ export function createNewNote(
 
 // Cloud Sync
 export async function syncWithCloud(
-  currentNotes: Note[]
-): Promise<{ notes: Note[]; isCloud: boolean }> {
+  currentNotes: Note[],
+  currentFolders: Folder[] = []
+): Promise<{ notes: Note[]; folders: Folder[]; isCloud: boolean; user?: AuthUser | null }> {
   if (typeof window === "undefined") {
-    return { notes: currentNotes, isCloud: false };
+    return { notes: currentNotes, folders: currentFolders, isCloud: false };
   }
 
   try {
     const res = await fetch("/api/sync", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ notes: currentNotes }),
+      body: JSON.stringify({ notes: currentNotes, folders: currentFolders }),
     });
 
     if (!res.ok) {
-      return { notes: currentNotes, isCloud: false };
+      return { notes: currentNotes, folders: currentFolders, isCloud: false };
     }
 
     const data = await res.json();
-    if (data.isCloud && Array.isArray(data.notes) && data.notes.length > 0) {
-      saveNotes(data.notes);
-      return { notes: data.notes, isCloud: true };
+    let updatedNotes = currentNotes;
+    let updatedFolders = currentFolders;
+
+    if (data.isCloud) {
+      if (Array.isArray(data.notes) && data.notes.length > 0) {
+        saveNotes(data.notes);
+        updatedNotes = data.notes;
+      }
+      if (Array.isArray(data.folders) && data.folders.length > 0) {
+        saveFolders(data.folders);
+        updatedFolders = data.folders;
+      }
+      return {
+        notes: updatedNotes,
+        folders: updatedFolders,
+        isCloud: true,
+        user: data.user,
+      };
     }
 
-    return { notes: currentNotes, isCloud: Boolean(data.isCloud) };
+    return {
+      notes: currentNotes,
+      folders: currentFolders,
+      isCloud: false,
+    };
   } catch (error) {
-    return { notes: currentNotes, isCloud: false };
+    return { notes: currentNotes, folders: currentFolders, isCloud: false };
   }
 }
 
 let syncTimeout: any = null;
 export function scheduleDebouncedSync(
   notes: Note[],
-  onComplete?: (updated: Note[], isCloud: boolean) => void
+  folders: Folder[] = [],
+  onComplete?: (updatedNotes: Note[], updatedFolders: Folder[], isCloud: boolean) => void
 ) {
   if (typeof window === "undefined") return;
   if (syncTimeout) clearTimeout(syncTimeout);
   syncTimeout = setTimeout(async () => {
-    const res = await syncWithCloud(notes);
-    if (onComplete) onComplete(res.notes, res.isCloud);
+    const res = await syncWithCloud(notes, folders);
+    if (onComplete) onComplete(res.notes, res.folders, res.isCloud);
   }, 1200);
 }

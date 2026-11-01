@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Note, Folder } from "@/types/vault";
+import { Note, Folder, AuthUser } from "@/types/vault";
 import {
   loadNotes,
   saveNotes,
@@ -19,6 +19,7 @@ import { NexusEditor } from "@/components/editor/NexusEditor";
 import { NexusGraph } from "@/components/graph/NexusGraph";
 import { NexusAIAssistant } from "@/components/ai/NexusAIAssistant";
 import { CommandPalette } from "@/components/palette/CommandPalette";
+import { AuthModal } from "@/components/auth/AuthModal";
 import {
   FileText,
   Plus,
@@ -37,6 +38,9 @@ import {
   RefreshCw,
   Menu,
   X,
+  LogOut,
+  LogIn,
+  User as UserIcon,
 } from "lucide-react";
 
 export const NexusWorkbench: React.FC = () => {
@@ -50,6 +54,8 @@ export const NexusWorkbench: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [syncStatus, setSyncStatus] = useState<"synced" | "syncing" | "offline">("offline");
   const [isCloudConfigured, setIsCloudConfigured] = useState(false);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // Tree collapse state
   const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set());
@@ -72,7 +78,7 @@ export const NexusWorkbench: React.FC = () => {
     }
   }, []);
 
-  // Load from local storage and sync with Neon on mount
+  // Load from local storage and check auth session
   useEffect(() => {
     const loadedFolders = loadFolders();
     setFolders(loadedFolders);
@@ -83,16 +89,31 @@ export const NexusWorkbench: React.FC = () => {
       setActiveNoteId(loadedNotes[0].id);
     }
 
-    setSyncStatus("syncing");
-    syncWithCloud(loadedNotes).then((res) => {
-      setIsCloudConfigured(res.isCloud);
-      if (res.isCloud) {
-        setNotes(res.notes);
-        setSyncStatus("synced");
-      } else {
+    // Check if user is logged in
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.user) {
+          setCurrentUser(data.user);
+          setIsCloudConfigured(true);
+          setSyncStatus("syncing");
+          syncWithCloud(loadedNotes, loadedFolders).then((res) => {
+            if (res.isCloud) {
+              setNotes(res.notes);
+              setFolders(res.folders);
+              setSyncStatus("synced");
+            } else {
+              setSyncStatus("offline");
+            }
+          });
+        } else {
+          setIsCloudConfigured(false);
+          setSyncStatus("offline");
+        }
+      })
+      .catch(() => {
         setSyncStatus("offline");
-      }
-    });
+      });
   }, []);
 
   // Global Ctrl+K / Ctrl+N shortcut listener
@@ -139,26 +160,63 @@ export const NexusWorkbench: React.FC = () => {
     return trail;
   }, [activeNote, folders, notes]);
 
-  const triggerSync = (currentNotes: Note[]) => {
+  const triggerSync = (currentNotes: Note[], currentFolders?: Folder[]) => {
     setSyncStatus("syncing");
-    scheduleDebouncedSync(currentNotes, (syncedNotes, isCloud) => {
-      setIsCloudConfigured(isCloud);
-      if (isCloud && syncedNotes.length > 0) {
-        setNotes(syncedNotes);
+    scheduleDebouncedSync(
+      currentNotes,
+      currentFolders || folders,
+      (syncedNotes, syncedFolders, isCloud) => {
+        setIsCloudConfigured(isCloud);
+        if (isCloud) {
+          if (syncedNotes.length > 0) setNotes(syncedNotes);
+          if (syncedFolders.length > 0) setFolders(syncedFolders);
+        }
+        setSyncStatus(isCloud ? "synced" : "offline");
       }
-      setSyncStatus(isCloud ? "synced" : "offline");
-    });
+    );
   };
 
   const handleManualSync = async () => {
+    if (!currentUser) {
+      setIsAuthModalOpen(true);
+      return;
+    }
     setSyncStatus("syncing");
-    const res = await syncWithCloud(notes);
+    const res = await syncWithCloud(notes, folders);
     setIsCloudConfigured(res.isCloud);
     if (res.isCloud) {
       setNotes(res.notes);
+      setFolders(res.folders);
+      if (res.user) setCurrentUser(res.user);
       setSyncStatus("synced");
     } else {
       setSyncStatus("offline");
+    }
+  };
+
+  const handleAuthSuccess = async (user: AuthUser) => {
+    setCurrentUser(user);
+    setIsCloudConfigured(true);
+    setSyncStatus("syncing");
+    const res = await syncWithCloud(notes, folders);
+    if (res.isCloud) {
+      setNotes(res.notes);
+      setFolders(res.folders);
+      setSyncStatus("synced");
+      if (res.notes.length > 0) {
+        setActiveNoteId(res.notes[0].id);
+      }
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      setCurrentUser(null);
+      setIsCloudConfigured(false);
+      setSyncStatus("offline");
+    } catch (e) {
+      console.error("Logout failed", e);
     }
   };
 
@@ -216,6 +274,7 @@ export const NexusWorkbench: React.FC = () => {
     saveFolders(nextFolders);
     setNewFolderName("");
     setIsCreatingFolder(false);
+    triggerSync(notes, nextFolders);
   };
 
   const handleDeleteFolder = (folderId: string, e: React.MouseEvent) => {
@@ -231,7 +290,7 @@ export const NexusWorkbench: React.FC = () => {
       );
       setNotes(updatedNotes);
       saveNotes(updatedNotes);
-      triggerSync(updatedNotes);
+      triggerSync(updatedNotes, remainingFolders);
     }
   };
 
@@ -602,8 +661,44 @@ export const NexusWorkbench: React.FC = () => {
           )}
         </div>
 
-        {/* Quick Search Palette Button */}
-        <div className="p-3 border-t border-gray-800 bg-[#0d1117]/60">
+        {/* User Account & Quick Search Footer */}
+        <div className="p-3 border-t border-gray-800 bg-[#0d1117]/60 space-y-2">
+          {currentUser ? (
+            <div className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-[#161b22] border border-gray-800 text-xs">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-500 text-white font-bold flex items-center justify-center text-[10px] shrink-0">
+                  {currentUser.name ? currentUser.name[0].toUpperCase() : "U"}
+                </div>
+                <div className="min-w-0">
+                  <div className="text-gray-200 font-medium truncate text-xs leading-tight">
+                    {currentUser.name}
+                  </div>
+                  <div className="text-gray-500 text-[10px] truncate leading-tight">
+                    {currentUser.email}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="p-1 text-gray-500 hover:text-red-400 hover:bg-gray-800 rounded transition touch-manipulation"
+                title="Log Out"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setIsAuthModalOpen(true)}
+              className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-purple-950/40 border border-purple-800/50 text-purple-300 hover:bg-purple-900/40 hover:text-white transition text-xs group touch-manipulation"
+            >
+              <div className="flex items-center gap-2">
+                <Cloud className="w-3.5 h-3.5 text-purple-400" />
+                <span className="font-medium">Sign In to Cloud Sync</span>
+              </div>
+              <LogIn className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
+            </button>
+          )}
+
           <button
             onClick={() => setIsPaletteOpen(true)}
             className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-[#161b22] border border-gray-800 text-gray-400 hover:text-white transition text-xs"
@@ -711,14 +806,14 @@ export const NexusWorkbench: React.FC = () => {
                   : "bg-gray-800/40 text-gray-400 border-gray-800 hover:text-white"
               }`}
               title={
-                isCloudConfigured
-                  ? "Connected to Neon Database (Tap to sync)"
-                  : "Local storage mode."
+                currentUser
+                  ? `Logged in as ${currentUser.email} (Tap to sync)`
+                  : "Running in local storage mode. Tap to sign in and enable cloud sync."
               }
             >
               {syncStatus === "syncing" ? (
                 <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-400" />
-              ) : isCloudConfigured ? (
+              ) : currentUser ? (
                 <Cloud className="w-3.5 h-3.5 text-emerald-400" />
               ) : (
                 <CloudOff className="w-3.5 h-3.5 text-gray-500" />
@@ -726,9 +821,9 @@ export const NexusWorkbench: React.FC = () => {
               <span className="hidden md:inline">
                 {syncStatus === "syncing"
                   ? "Syncing"
-                  : isCloudConfigured
+                  : currentUser
                   ? "Synced"
-                  : "Local"}
+                  : "Sign In"}
               </span>
             </button>
 
@@ -875,6 +970,13 @@ export const NexusWorkbench: React.FC = () => {
         }}
         onCreateNote={(title) => handleCreateNewNote(title)}
         onOpenGraph={() => setViewMode("graph")}
+      />
+
+      {/* 7. Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={handleAuthSuccess}
       />
     </div>
   );

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getDb, isDatabaseConfigured } from "@/db";
 import { notes } from "@/db/schema";
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
+import { getSessionUser } from "@/lib/auth";
 
 export async function GET() {
   if (!isDatabaseConfigured()) {
@@ -13,16 +14,31 @@ export async function GET() {
   }
 
   try {
+    const session = await getSessionUser();
+    if (!session) {
+      return NextResponse.json({
+        configured: true,
+        authenticated: false,
+        notes: [],
+      });
+    }
+
     const db = getDb();
     if (!db) {
       return NextResponse.json({ configured: false, notes: [] });
     }
-    const allNotes = await db
+
+    const userNotes = await db
       .select()
       .from(notes)
+      .where(eq(notes.userId, session.userId))
       .orderBy(desc(notes.updatedAt));
 
-    return NextResponse.json({ configured: true, notes: allNotes });
+    return NextResponse.json({
+      configured: true,
+      authenticated: true,
+      notes: userNotes,
+    });
   } catch (error: any) {
     console.error("Failed to query notes from Neon:", error);
     return NextResponse.json(
@@ -41,6 +57,7 @@ export async function POST(req: Request) {
   }
 
   try {
+    const session = await getSessionUser();
     const body = await req.json();
     const db = getDb();
     if (!db) throw new Error("Database client unavailable");
@@ -49,6 +66,7 @@ export async function POST(req: Request) {
       .insert(notes)
       .values({
         id: body.id,
+        userId: session?.userId || null,
         title: body.title,
         content: body.content,
         folderId: body.folderId || null,

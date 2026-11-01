@@ -4,22 +4,22 @@ const VAULT_STORAGE_KEY = "nexus_vault_notes_v3";
 const FOLDERS_STORAGE_KEY = "nexus_vault_folders_v3";
 
 export const INITIAL_SAMPLE_FOLDERS: Folder[] = [
-  { id: "getting-started", name: "Getting Started", color: "#a855f7" },
-  { id: "architecture", name: "Architecture", color: "#3b82f6" },
+  { id: "getting-started", name: "Getting Started", color: "#6366f1" },
+  { id: "architecture", name: "Architecture", color: "#38bdf8" },
   { id: "ai-research", name: "AI & Research", color: "#10b981" },
 ];
 
 export const INITIAL_SAMPLE_NOTES: Note[] = [
   {
-    id: "welcome-to-nexus",
-    title: "Welcome to Nexus",
+    id: "welcome-to-astro",
+    title: "Welcome to Astro",
     folderId: "getting-started",
-    content: `**Nexus** is an AI-native, local-first knowledge management system engineered to combine the speed of block-based editors with deep intelligence and cloud sync.
+    content: `**Astro** is a space-grade, local-first knowledge management vault engineered to combine the speed of block-based editors with deep intelligence and cloud sync.
 
 ### Core Superpowers
 - **Folders & Subpages**: Organize your knowledge with clean, nested hierarchies.
 - **Local-First & Offline**: Notes are stored directly in your browser's local storage and synced with Neon PostgreSQL.
-- **Interactive Knowledge Graph**: Visualize your folders, notes, and subpages as an interconnected universe.
+- **Interactive Knowledge Graph**: Visualize your folders, notes, and subpages as an interconnected cosmic constellation.
 - **AI Intelligence Layer**: Vault-wide semantic retrieval and automated synthesis.
 
 ### Quick Navigation
@@ -34,7 +34,7 @@ export const INITIAL_SAMPLE_NOTES: Note[] = [
     id: "quick-tips",
     title: "Quick Tips & Shortcuts",
     folderId: "getting-started",
-    parentId: "welcome-to-nexus",
+    parentId: "welcome-to-astro",
     content: `Here are 3 quick actions to take right now:
 
 1. **Create a Note**: Click the **+** button in the sidebar header or use the floating button.
@@ -64,7 +64,7 @@ export const INITIAL_SAMPLE_NOTES: Note[] = [
     title: "Neon Cloud Sync",
     folderId: "architecture",
     parentId: "local-first-software",
-    content: `Nexus connects to **Neon Serverless PostgreSQL** for automatic multi-device synchronization.
+    content: `Astro connects to **Neon Serverless PostgreSQL** for automatic multi-device synchronization.
 
 - Powered by Drizzle ORM and the \`@neondatabase/serverless\` driver.
 - Serverless architecture scales to zero when idle and wakes up with zero cold starts.

@@ -64,18 +64,18 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 bg-black/60 backdrop-blur-sm p-4">
-      <div className="w-full max-w-xl bg-[#161b22] border border-gray-700/80 rounded-xl shadow-2xl overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 bg-black/70 backdrop-blur-sm p-4">
+      <div className="w-full max-w-xl bg-[#0B0F19] border border-slate-800/80 rounded-xl shadow-2xl overflow-hidden flex flex-col">
         {/* Search Input Bar */}
-        <div className="flex items-center px-4 py-3 border-b border-gray-800 bg-[#0d1117]">
-          <Search className="w-4 h-4 text-gray-400 mr-2.5" />
+        <div className="flex items-center px-4 py-3 border-b border-slate-800 bg-[#06080F]">
+          <Search className="w-4 h-4 text-slate-400 mr-2.5" />
           <input
             ref={inputRef}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Type a command or search notes in your vault..."
-            className="w-full bg-transparent text-sm text-gray-100 placeholder-gray-500 focus:outline-none"
+            placeholder="Type a command or search notes in Astro Vault..."
+            className="w-full bg-transparent text-sm text-slate-100 placeholder-slate-500 focus:outline-none"
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 if (filteredNotes.length > 0) {
@@ -88,7 +88,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               }
             }}
           />
-          <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] text-gray-400 bg-gray-800 rounded border border-gray-700">
+          <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] text-slate-400 bg-slate-800 rounded border border-slate-700">
             ESC
           </kbd>
         </div>
@@ -101,9 +101,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                 onCreateNote(query.trim());
                 onClose();
               }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-purple-300 hover:bg-purple-950/40 hover:border hover:border-purple-800/40 transition group"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-sky-300 hover:bg-sky-950/40 hover:border hover:border-sky-800/40 transition group"
             >
-              <Plus className="w-4 h-4 text-purple-400" />
+              <Plus className="w-4 h-4 text-sky-400" />
               <div className="flex-1">
                 <span>Create new note: </span>
                 <span className="font-semibold text-white">"{query.trim()}"</span>
@@ -117,12 +117,12 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               onOpenGraph();
               onClose();
             }}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-gray-300 hover:bg-gray-800/70 transition"
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-slate-300 hover:bg-slate-800/70 transition"
           >
             <Share2 className="w-4 h-4 text-indigo-400" />
             <div className="flex-1">
               <span className="font-medium text-white">Open Knowledge Graph View</span>
-              <span className="text-gray-400 text-[11px] block">
+              <span className="text-slate-400 text-[11px] block">
                 Visualize all note connections and clusters
               </span>
             </div>
@@ -136,12 +136,12 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                   onSelectNote(note.id);
                   onClose();
                 }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-gray-300 hover:bg-gray-800 transition group"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-slate-300 hover:bg-slate-800/70 transition group"
               >
-                <FileText className="w-4 h-4 text-gray-400 group-hover:text-purple-400" />
+                <FileText className="w-4 h-4 text-slate-400 group-hover:text-sky-400" />
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-gray-200 truncate">{note.title}</div>
-                  <div className="text-gray-400 text-[11px] flex items-center gap-2">
+                  <div className="font-medium text-slate-200 truncate group-hover:text-white">{note.title}</div>
+                  <div className="text-slate-400 text-[11px] flex items-center gap-2">
                     {note.parentId && <span className="text-emerald-400">Subpage</span>}
                     {note.tags && note.tags.length > 0 && (
                       <span>#{note.tags.join(" #")}</span>
@@ -151,20 +151,20 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               </button>
             ))
           ) : query.trim() ? (
-            <div className="p-4 text-center text-gray-400 text-xs">
+            <div className="p-4 text-center text-slate-400 text-xs">
               No existing notes found. Press <strong>Enter</strong> to create "{query}".
             </div>
           ) : null}
         </div>
 
         {/* Footer shortcuts */}
-        <div className="px-3 py-2 bg-[#0d1117] border-t border-gray-800 text-[10px] text-gray-400 flex items-center justify-between">
+        <div className="px-3 py-2 bg-[#06080F] border-t border-slate-800 text-[10px] text-slate-400 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span><strong>↑↓</strong> navigate</span>
             <span><strong>↵</strong> select</span>
             <span><strong>esc</strong> close</span>
           </div>
-          <span>Nexus Vault</span>
+          <span className="font-medium text-slate-400">Astro Vault</span>
         </div>
       </div>
     </div>

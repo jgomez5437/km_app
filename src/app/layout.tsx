@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Nexus — AI-Native Knowledge Management",
+  title: "Astro — Space-Grade Knowledge Base",
   description:
-    "Next-generation local-first knowledge base with hybrid block-markdown editing, interactive knowledge graph, and AI synthesis.",
+    "Next-generation cosmic, local-first knowledge base with hybrid block-markdown editing, interactive constellation graph, and AI synthesis.",
 };
 
 export default function RootLayout({
@@ -28,7 +28,7 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
     >
-      <body className="h-full bg-[#0d1117] text-gray-100 overflow-hidden">
+      <body className="h-full bg-[#06080F] text-slate-100 overflow-hidden">
         {children}
       </body>
     </html>

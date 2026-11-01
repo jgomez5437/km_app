@@ -44,7 +44,7 @@ export const NexusGraph: React.FC<NexusGraphProps> = ({
         group: "folder",
         nodeType: "folder",
         radius: 17,
-        color: "#a855f7", // Vibrant Purple
+        color: "#6366f1", // Celestial Indigo
       });
     });
 
@@ -58,7 +58,7 @@ export const NexusGraph: React.FC<NexusGraphProps> = ({
         group: isSubpage ? "subpage" : "note",
         nodeType: isSubpage ? "subpage" : "note",
         radius: isSubpage ? 8 : 12,
-        color: isSubpage ? "#34d399" : "#38bdf8", // Emerald for subpages, Sky Blue for notes
+        color: isSubpage ? "#34d399" : "#38bdf8", // Emerald for subpages, Starlight Cyan for notes
       });
 
       // Links: Folder -> Note
@@ -215,13 +215,13 @@ export const NexusGraph: React.FC<NexusGraphProps> = ({
         ctx.lineTo(p2.x, p2.y);
 
         if (isHighlighted) {
-          ctx.strokeStyle = "rgba(168, 85, 247, 0.85)";
+          ctx.strokeStyle = "rgba(56, 189, 248, 0.9)";
           ctx.lineWidth = 2;
         } else if (highlightId) {
-          ctx.strokeStyle = "rgba(75, 85, 99, 0.15)";
+          ctx.strokeStyle = "rgba(30, 41, 59, 0.35)";
           ctx.lineWidth = 0.8;
         } else {
-          ctx.strokeStyle = "rgba(156, 163, 175, 0.25)";
+          ctx.strokeStyle = "rgba(148, 163, 184, 0.2)";
           ctx.lineWidth = 1;
         }
         ctx.stroke();
@@ -251,15 +251,15 @@ export const NexusGraph: React.FC<NexusGraphProps> = ({
           ctx.beginPath();
           ctx.arc(p.x, p.y, node.radius + 6, 0, 2 * Math.PI);
           ctx.fillStyle = isActive
-            ? "rgba(168, 85, 247, 0.3)"
-            : "rgba(56, 189, 248, 0.3)";
+            ? "rgba(56, 189, 248, 0.35)"
+            : "rgba(99, 102, 241, 0.35)";
           ctx.fill();
         }
 
         // Node Body
         ctx.beginPath();
         ctx.arc(p.x, p.y, node.radius, 0, 2 * Math.PI);
-        ctx.fillStyle = isActive ? "#c084fc" : node.color;
+        ctx.fillStyle = isActive ? "#38bdf8" : node.color;
         ctx.fill();
 
         // Node Border
@@ -361,21 +361,21 @@ export const NexusGraph: React.FC<NexusGraphProps> = ({
   };
 
   return (
-    <div className="relative w-full h-full bg-[#0d1117] overflow-hidden flex flex-col select-none">
+    <div className="relative w-full h-full bg-[#06080F] overflow-hidden flex flex-col select-none">
       {/* Top Controls */}
-      <div className="absolute top-3 left-3 z-10 flex items-center gap-2 bg-[#161b22]/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-gray-800 text-xs shadow-lg">
-        <Filter className="w-3.5 h-3.5 text-purple-400" />
+      <div className="absolute top-3 left-3 z-10 flex items-center gap-2 bg-[#0B0F19]/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-800/80 text-xs shadow-lg">
+        <Filter className="w-3.5 h-3.5 text-sky-400" />
         <input
           type="text"
           placeholder="Filter nodes..."
           value={searchFilter}
           onChange={(e) => setSearchFilter(e.target.value)}
-          className="bg-transparent border-none text-gray-200 focus:outline-none placeholder-gray-500 w-32 text-xs"
+          className="bg-transparent border-none text-slate-200 focus:outline-none placeholder-slate-500 w-32 text-xs"
         />
         {searchFilter && (
           <button
             onClick={() => setSearchFilter("")}
-            className="text-gray-400 hover:text-white text-[10px]"
+            className="text-slate-400 hover:text-white text-[10px]"
           >
             Clear
           </button>
@@ -383,12 +383,12 @@ export const NexusGraph: React.FC<NexusGraphProps> = ({
       </div>
 
       {/* Floating View Controls */}
-      <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-[#161b22]/90 backdrop-blur-md p-1.5 rounded-lg border border-gray-800 shadow-lg">
+      <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-[#0B0F19]/90 backdrop-blur-md p-1.5 rounded-lg border border-slate-800/80 shadow-lg">
         <button
           onClick={() => setShowLabels(!showLabels)}
           title="Toggle Labels"
-          className={`p-1.5 rounded hover:bg-gray-800 transition ${
-            showLabels ? "text-purple-400" : "text-gray-400"
+          className={`p-1.5 rounded hover:bg-slate-800/60 transition ${
+            showLabels ? "text-sky-400" : "text-slate-400"
           }`}
         >
           <Eye className="w-4 h-4" />
@@ -396,29 +396,29 @@ export const NexusGraph: React.FC<NexusGraphProps> = ({
         <button
           onClick={() => setZoom((z) => Math.min(3.5, z * 1.2))}
           title="Zoom In"
-          className="p-1.5 rounded hover:bg-gray-800 text-gray-300 transition"
+          className="p-1.5 rounded hover:bg-slate-800/60 text-slate-300 hover:text-white transition"
         >
           <ZoomIn className="w-4 h-4" />
         </button>
         <button
           onClick={() => setZoom((z) => Math.max(0.2, z * 0.8))}
           title="Zoom Out"
-          className="p-1.5 rounded hover:bg-gray-800 text-gray-300 transition"
+          className="p-1.5 rounded hover:bg-slate-800/60 text-slate-300 hover:text-white transition"
         >
           <ZoomOut className="w-4 h-4" />
         </button>
         <button
           onClick={resetView}
           title="Reset Graph Position"
-          className="p-1.5 rounded hover:bg-gray-800 text-gray-300 transition"
+          className="p-1.5 rounded hover:bg-slate-800/60 text-slate-300 hover:text-white transition"
         >
           <RotateCcw className="w-4 h-4" />
         </button>
       </div>
 
       {/* Bottom Status Indicator */}
-      <div className="absolute bottom-3 left-3 z-10 text-[11px] text-gray-400 bg-[#161b22]/80 backdrop-blur-md px-2.5 py-1 rounded border border-gray-800 flex items-center gap-2">
-        <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
+      <div className="absolute bottom-3 left-3 z-10 text-[11px] text-slate-400 bg-[#0B0F19]/80 backdrop-blur-md px-2.5 py-1 rounded border border-slate-800/80 flex items-center gap-2">
+        <span className="inline-block w-2 h-2 rounded-full bg-sky-400" />
         <span>
           {folders.length} Folders · {notes.length} Notes & Subpages
         </span>

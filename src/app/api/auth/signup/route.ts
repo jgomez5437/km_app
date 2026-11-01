@@ -82,14 +82,14 @@ export async function POST(req: Request) {
         userId,
         vaultId,
         name: "Getting Started",
-        color: "#a855f7",
+        color: "#6366f1",
       },
       {
         id: folderAI,
         userId,
         vaultId,
         name: "AI & Research",
-        color: "#6366f1",
+        color: "#38bdf8",
       },
     ]);
 
@@ -101,9 +101,9 @@ export async function POST(req: Request) {
       userId,
       vaultId,
       folderId: folderGettingStarted,
-      title: "Welcome to Nexus",
+      title: "Welcome to Astro",
       content:
-        "Welcome to your personal private cloud vault!\n\n" +
+        "Welcome to your personal Astro cloud vault!\n\n" +
         "### Key Capabilities:\n" +
         "- **Folders & Subpages**: Group your notes seamlessly with folders and subpage hierarchies.\n" +
         "- **Interactive Knowledge Graph**: Visualize your vault connections in real time.\n" +

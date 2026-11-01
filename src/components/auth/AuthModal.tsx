@@ -72,28 +72,30 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
-      <div className="w-full max-w-md bg-[#161b22] border border-gray-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
+      <div className="w-full max-w-md bg-[#0B0F19] border border-slate-800/80 rounded-2xl shadow-2xl shadow-black/80 overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
         {/* Modal Header */}
-        <div className="px-6 pt-6 pb-4 border-b border-gray-800/80 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center shadow-md">
-              <Cloud className="w-4 h-4 text-white" />
-            </div>
+        <div className="px-6 pt-6 pb-4 border-b border-slate-800/80 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img
+              src="/astro-logo.png"
+              alt="Astro"
+              className="h-7 w-auto object-contain filter drop-shadow-[0_0_8px_rgba(56,189,248,0.35)]"
+            />
             <div>
               <h2 className="text-base font-bold text-white tracking-tight">
-                {mode === "login" ? "Welcome back" : "Create your Vault"}
+                {mode === "login" ? "Welcome to Astro" : "Create your Astro Vault"}
               </h2>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-slate-400">
                 {mode === "login"
-                  ? "Log in to sync your notes & folders"
+                  ? "Log in to sync your interstellar vault"
                   : "Private cloud storage powered by Neon"}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition touch-manipulation"
+            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition touch-manipulation"
           >
             <X className="w-4 h-4" />
           </button>
@@ -109,8 +111,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             }}
             className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition ${
               mode === "login"
-                ? "bg-purple-900/40 text-purple-200 border border-purple-700/50"
-                : "text-gray-400 hover:text-white hover:bg-gray-800/50"
+                ? "bg-sky-950/60 text-sky-200 border border-sky-800/60 shadow-xs"
+                : "text-slate-400 hover:text-white hover:bg-slate-800/50"
             }`}
           >
             Log In
@@ -123,8 +125,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             }}
             className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition ${
               mode === "signup"
-                ? "bg-purple-900/40 text-purple-200 border border-purple-700/50"
-                : "text-gray-400 hover:text-white hover:bg-gray-800/50"
+                ? "bg-sky-950/60 text-sky-200 border border-sky-800/60 shadow-xs"
+                : "text-slate-400 hover:text-white hover:bg-slate-800/50"
             }`}
           >
             Sign Up
@@ -142,45 +144,45 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
           {mode === "signup" && (
             <div>
-              <label className="block text-xs font-medium text-gray-300 mb-1.5">
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">
                 Display Name (Optional)
               </label>
               <div className="relative">
-                <UserIcon className="w-4 h-4 text-gray-500 absolute left-3 top-2.5" />
+                <UserIcon className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Alex"
-                  className="w-full pl-9 pr-3 py-2 bg-[#0d1117] border border-gray-800 rounded-lg text-xs text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition"
+                  className="w-full pl-9 pr-3 py-2 bg-[#06080F] border border-slate-800 rounded-lg text-xs text-white placeholder-slate-600 focus:outline-none focus:border-sky-500 transition"
                 />
               </div>
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-medium text-gray-300 mb-1.5">
+            <label className="block text-xs font-medium text-slate-300 mb-1.5">
               Email Address
             </label>
             <div className="relative">
-              <Mail className="w-4 h-4 text-gray-500 absolute left-3 top-2.5" />
+              <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@domain.com"
-                className="w-full pl-9 pr-3 py-2 bg-[#0d1117] border border-gray-800 rounded-lg text-xs text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition"
+                className="w-full pl-9 pr-3 py-2 bg-[#06080F] border border-slate-800 rounded-lg text-xs text-white placeholder-slate-600 focus:outline-none focus:border-sky-500 transition"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-300 mb-1.5">
+            <label className="block text-xs font-medium text-slate-300 mb-1.5">
               Password
             </label>
             <div className="relative">
-              <Lock className="w-4 h-4 text-gray-500 absolute left-3 top-2.5" />
+              <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
               <input
                 type="password"
                 required
@@ -188,7 +190,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Minimum 6 characters"
-                className="w-full pl-9 pr-3 py-2 bg-[#0d1117] border border-gray-800 rounded-lg text-xs text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition"
+                className="w-full pl-9 pr-3 py-2 bg-[#06080F] border border-slate-800 rounded-lg text-xs text-white placeholder-slate-600 focus:outline-none focus:border-sky-500 transition"
               />
             </div>
           </div>
@@ -196,7 +198,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-2 py-2.5 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-semibold rounded-lg shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2 touch-manipulation active:scale-98"
+            className="w-full mt-2 py-2.5 px-4 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white text-xs font-semibold rounded-lg shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2 touch-manipulation active:scale-98"
           >
             {loading ? (
               <>
@@ -212,7 +214,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="text-[11px] text-gray-500 hover:text-gray-400 transition"
+              className="text-[11px] text-slate-500 hover:text-slate-400 transition"
             >
               Continue in Local Mode (offline storage)
             </button>

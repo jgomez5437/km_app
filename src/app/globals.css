@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0d1117;
-  --foreground: #ededed;
+  --background: #06080F;
+  --foreground: #f8fafc;
 }
 
 @theme inline {
@@ -14,6 +14,7 @@
 
 body {
   background: var(--background);
+  background-image: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(56, 189, 248, 0.05), transparent 70%);
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
   margin: 0;
@@ -32,12 +33,12 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #21262d;
+  background: #1E293B;
   border-radius: 3px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #30363d;
+  background: #334155;
 }
 
 /* TipTap Editor Styles */
@@ -72,35 +73,35 @@ body {
 }
 
 .tiptap ul[data-type="taskList"] li > label input[type="checkbox"] {
-  accent-color: #a855f7;
+  accent-color: #38bdf8;
   cursor: pointer;
   width: 1rem;
   height: 1rem;
 }
 
 .tiptap blockquote {
-  border-left: 3px solid #8b5cf6;
+  border-left: 3px solid #38bdf8;
   padding-left: 1rem;
-  color: #9ca3af;
+  color: #94a3b8;
   font-style: italic;
 }
 
 .tiptap code {
-  background: #161b22;
-  color: #e2e8f0;
+  background: #0E1424;
+  color: #38bdf8;
   padding: 0.15rem 0.35rem;
   border-radius: 0.25rem;
   font-family: var(--font-mono), monospace;
   font-size: 0.85em;
-  border: 1px solid #30363d;
+  border: 1px solid #1E293B;
 }
 
 .tiptap pre {
-  background: #161b22;
-  color: #f3f4f6;
+  background: #0A0F1D;
+  color: #f1f5f9;
   padding: 0.75rem 1rem;
   border-radius: 0.5rem;
-  border: 1px solid #30363d;
+  border: 1px solid #1E293B;
   overflow-x: auto;
   margin: 1rem 0;
   font-family: var(--font-mono), monospace;

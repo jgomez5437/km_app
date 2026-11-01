@@ -60,7 +60,7 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
-          class: "text-purple-400 hover:text-purple-300 underline underline-offset-2",
+          class: "text-sky-400 hover:text-sky-300 underline underline-offset-2",
         },
       }),
       Markdown.configure({
@@ -111,13 +111,13 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
   const readingTime = Math.ceil(wordCount / 200);
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#0d1117] text-gray-100 overflow-hidden">
+    <div className="flex-1 flex flex-col h-full bg-[#06080F] text-slate-100 overflow-hidden">
       {/* 1. Formatting Toolbar / Toolbox (Docked at top) */}
-      <div className="px-3 sm:px-8 py-2 bg-[#161b22]/70 border-b border-gray-800/60 flex items-center gap-1 text-gray-400 text-xs overflow-x-auto no-scrollbar flex-nowrap">
+      <div className="px-3 sm:px-8 py-2 bg-[#0B0F19]/80 border-b border-slate-800/80 flex items-center gap-1 text-slate-400 text-xs overflow-x-auto no-scrollbar flex-nowrap backdrop-blur-sm">
         <button
           onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-          className={`p-2 sm:p-1.5 rounded-md hover:bg-gray-800 transition shrink-0 touch-manipulation ${
-            editor.isActive("heading", { level: 1 }) ? "text-purple-400 bg-gray-800" : ""
+          className={`p-2 sm:p-1.5 rounded-md hover:bg-slate-800/60 hover:text-white transition shrink-0 touch-manipulation ${
+            editor.isActive("heading", { level: 1 }) ? "text-sky-300 bg-slate-800/90" : ""
           }`}
           title="Heading 1"
         >
@@ -125,8 +125,8 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
         </button>
         <button
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          className={`p-2 sm:p-1.5 rounded-md hover:bg-gray-800 transition shrink-0 touch-manipulation ${
-            editor.isActive("heading", { level: 2 }) ? "text-purple-400 bg-gray-800" : ""
+          className={`p-2 sm:p-1.5 rounded-md hover:bg-slate-800/60 hover:text-white transition shrink-0 touch-manipulation ${
+            editor.isActive("heading", { level: 2 }) ? "text-sky-300 bg-slate-800/90" : ""
           }`}
           title="Heading 2"
         >
@@ -134,20 +134,20 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
         </button>
         <button
           onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          className={`p-2 sm:p-1.5 rounded-md hover:bg-gray-800 transition shrink-0 touch-manipulation ${
-            editor.isActive("heading", { level: 3 }) ? "text-purple-400 bg-gray-800" : ""
+          className={`p-2 sm:p-1.5 rounded-md hover:bg-slate-800/60 hover:text-white transition shrink-0 touch-manipulation ${
+            editor.isActive("heading", { level: 3 }) ? "text-sky-300 bg-slate-800/90" : ""
           }`}
           title="Heading 3"
         >
           <Heading3 className="w-4 h-4" />
         </button>
 
-        <div className="w-[1px] h-4 bg-gray-800 mx-1 shrink-0" />
+        <div className="w-[1px] h-4 bg-slate-800 mx-1 shrink-0" />
 
         <button
           onClick={() => editor.chain().focus().toggleBold().run()}
-          className={`p-2 sm:p-1.5 rounded-md hover:bg-gray-800 transition shrink-0 touch-manipulation ${
-            editor.isActive("bold") ? "text-purple-400 bg-gray-800" : ""
+          className={`p-2 sm:p-1.5 rounded-md hover:bg-slate-800/60 hover:text-white transition shrink-0 touch-manipulation ${
+            editor.isActive("bold") ? "text-sky-300 bg-slate-800/90" : ""
           }`}
           title="Bold"
         >
@@ -155,8 +155,8 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
         </button>
         <button
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={`p-2 sm:p-1.5 rounded-md hover:bg-gray-800 transition shrink-0 touch-manipulation ${
-            editor.isActive("italic") ? "text-purple-400 bg-gray-800" : ""
+          className={`p-2 sm:p-1.5 rounded-md hover:bg-slate-800/60 hover:text-white transition shrink-0 touch-manipulation ${
+            editor.isActive("italic") ? "text-sky-300 bg-slate-800/90" : ""
           }`}
           title="Italic"
         >
@@ -164,20 +164,20 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
         </button>
         <button
           onClick={() => editor.chain().focus().toggleCode().run()}
-          className={`p-2 sm:p-1.5 rounded-md hover:bg-gray-800 transition shrink-0 touch-manipulation ${
-            editor.isActive("code") ? "text-purple-400 bg-gray-800" : ""
+          className={`p-2 sm:p-1.5 rounded-md hover:bg-slate-800/60 hover:text-white transition shrink-0 touch-manipulation ${
+            editor.isActive("code") ? "text-sky-300 bg-slate-800/90" : ""
           }`}
           title="Inline Code"
         >
           <Code className="w-4 h-4" />
         </button>
 
-        <div className="w-[1px] h-4 bg-gray-800 mx-1 shrink-0" />
+        <div className="w-[1px] h-4 bg-slate-800 mx-1 shrink-0" />
 
         <button
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={`p-2 sm:p-1.5 rounded-md hover:bg-gray-800 transition shrink-0 touch-manipulation ${
-            editor.isActive("bulletList") ? "text-purple-400 bg-gray-800" : ""
+          className={`p-2 sm:p-1.5 rounded-md hover:bg-slate-800/60 hover:text-white transition shrink-0 touch-manipulation ${
+            editor.isActive("bulletList") ? "text-sky-300 bg-slate-800/90" : ""
           }`}
           title="Bullet List"
         >
@@ -185,8 +185,8 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
         </button>
         <button
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={`p-2 sm:p-1.5 rounded-md hover:bg-gray-800 transition shrink-0 touch-manipulation ${
-            editor.isActive("orderedList") ? "text-purple-400 bg-gray-800" : ""
+          className={`p-2 sm:p-1.5 rounded-md hover:bg-slate-800/60 hover:text-white transition shrink-0 touch-manipulation ${
+            editor.isActive("orderedList") ? "text-sky-300 bg-slate-800/90" : ""
           }`}
           title="Numbered List"
         >
@@ -194,8 +194,8 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
         </button>
         <button
           onClick={() => editor.chain().focus().toggleTaskList().run()}
-          className={`p-2 sm:p-1.5 rounded-md hover:bg-gray-800 transition shrink-0 touch-manipulation ${
-            editor.isActive("taskList") ? "text-purple-400 bg-gray-800" : ""
+          className={`p-2 sm:p-1.5 rounded-md hover:bg-slate-800/60 hover:text-white transition shrink-0 touch-manipulation ${
+            editor.isActive("taskList") ? "text-sky-300 bg-slate-800/90" : ""
           }`}
           title="Task Checklist"
         >
@@ -203,8 +203,8 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
         </button>
         <button
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          className={`p-2 sm:p-1.5 rounded-md hover:bg-gray-800 transition shrink-0 touch-manipulation ${
-            editor.isActive("blockquote") ? "text-purple-400 bg-gray-800" : ""
+          className={`p-2 sm:p-1.5 rounded-md hover:bg-slate-800/60 hover:text-white transition shrink-0 touch-manipulation ${
+            editor.isActive("blockquote") ? "text-sky-300 bg-slate-800/90" : ""
           }`}
           title="Blockquote"
         >
@@ -222,23 +222,23 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
               value={noteTitle}
               onChange={(e) => onUpdateTitle(e.target.value)}
               placeholder="Untitled Note"
-              className="w-full text-2xl sm:text-3xl md:text-4xl font-extrabold bg-transparent text-white border-none focus:outline-none placeholder-gray-600 tracking-tight"
+              className="w-full text-2xl sm:text-3xl md:text-4xl font-extrabold bg-transparent text-white border-none focus:outline-none placeholder-slate-600 tracking-tight"
             />
           </div>
 
           <EditorContent editor={editor} />
 
           {/* 4. Hierarchical Subpages Section */}
-          <div className="mt-12 pt-6 border-t border-gray-800/80">
+          <div className="mt-12 pt-6 border-t border-slate-800/80">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-                <FileText className="w-3.5 h-3.5 text-purple-400" />
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                <FileText className="w-3.5 h-3.5 text-sky-400" />
                 <span>Subpages ({subpages.length})</span>
               </span>
               {onCreateSubpage && (
                 <button
                   onClick={onCreateSubpage}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-purple-900/30 hover:bg-purple-900/50 text-purple-300 border border-purple-800/50 text-xs transition active:scale-95"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-sky-950/40 hover:bg-sky-900/50 text-sky-300 border border-sky-800/50 text-xs transition active:scale-95"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Add Subpage</span>
@@ -252,22 +252,22 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
                   <button
                     key={sub.id}
                     onClick={() => onSelectNote?.(sub.id)}
-                    className="flex items-center justify-between p-3 rounded-lg bg-[#161b22] hover:bg-[#1f242c] border border-gray-800 hover:border-purple-800/40 text-left transition group"
+                    className="flex items-center justify-between p-3 rounded-lg bg-[#0B0F19] hover:bg-[#111827] border border-slate-800/80 hover:border-sky-700/50 text-left transition group"
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <FileText className="w-4 h-4 text-purple-400 shrink-0" />
-                      <span className="text-sm font-medium text-gray-200 truncate group-hover:text-white">
+                      <FileText className="w-4 h-4 text-sky-400 shrink-0" />
+                      <span className="text-sm font-medium text-slate-200 truncate group-hover:text-white">
                         {sub.title}
                       </span>
                     </div>
-                    <span className="text-gray-500 group-hover:text-purple-300 text-xs ml-2">
+                    <span className="text-slate-500 group-hover:text-sky-300 text-xs ml-2">
                       →
                     </span>
                   </button>
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-gray-500 italic">
+              <p className="text-xs text-slate-500 italic">
                 No subpages yet. Group related concepts under this note by clicking Add Subpage.
               </p>
             )}
@@ -276,14 +276,14 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
       </div>
 
       {/* 5. Minimalist Bottom Status Bar */}
-      <div className="px-4 sm:px-6 py-2 bg-[#161b22] border-t border-gray-800 text-[11px] text-gray-500 flex items-center justify-between">
+      <div className="px-4 sm:px-6 py-2 bg-[#0B0F19] border-t border-slate-800/80 text-[11px] text-slate-400 flex items-center justify-between">
         <div>
           <span>{wordCount} words</span>
           <span className="mx-2">·</span>
           <span>~{readingTime} min read</span>
         </div>
-        <div className="text-[11px] text-gray-500">
-          Nexus
+        <div className="text-[11px] text-slate-400 font-medium">
+          Astro
         </div>
       </div>
     </div>

@@ -46,7 +46,7 @@ import {
 export const NexusWorkbench: React.FC = () => {
   const [folders, setFolders] = useState<Folder[]>(INITIAL_SAMPLE_FOLDERS);
   const [notes, setNotes] = useState<Note[]>(INITIAL_SAMPLE_NOTES);
-  const [activeNoteId, setActiveNoteId] = useState<string>("welcome-to-nexus");
+  const [activeNoteId, setActiveNoteId] = useState<string>("welcome-to-astro");
   const [viewMode, setViewMode] = useState<"editor" | "split" | "graph">("editor");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isRightDrawerOpen, setIsRightDrawerOpen] = useState(false);
@@ -385,8 +385,8 @@ export const NexusWorkbench: React.FC = () => {
           }}
           className={`group flex items-center justify-between py-1.5 px-2 rounded-md cursor-pointer transition text-xs ${
             isActive
-              ? "bg-purple-950/60 text-purple-200 border border-purple-800/40"
-              : "text-gray-300 hover:bg-[#1f242c]"
+              ? "bg-sky-950/60 text-sky-200 border border-sky-800/50 shadow-sm shadow-sky-950/50"
+              : "text-slate-300 hover:bg-[#111827] hover:text-white"
           }`}
           style={{ paddingLeft: `${8 + depth * 14}px` }}
         >
@@ -394,7 +394,7 @@ export const NexusWorkbench: React.FC = () => {
             {hasSubpages ? (
               <button
                 onClick={(e) => toggleNoteCollapse(note.id, e)}
-                className="p-0.5 text-gray-500 hover:text-white"
+                className="p-0.5 text-slate-500 hover:text-white"
               >
                 {isCollapsed ? (
                   <ChevronRight className="w-3 h-3" />
@@ -407,7 +407,7 @@ export const NexusWorkbench: React.FC = () => {
             )}
             <FileText
               className={`w-3.5 h-3.5 flex-shrink-0 ${
-                isActive ? "text-purple-400" : "text-gray-500"
+                isActive ? "text-sky-400" : "text-slate-500"
               }`}
             />
             <span className="truncate">{note.title}</span>
@@ -426,10 +426,10 @@ export const NexusWorkbench: React.FC = () => {
                 e.stopPropagation();
                 handleCreateSubpage(note.id, note.folderId);
               }}
-              className={`p-1 rounded hover:bg-gray-700/60 transition touch-manipulation ${
+              className={`p-1 rounded hover:bg-slate-800/80 transition touch-manipulation ${
                 isActive
-                  ? "text-purple-300 hover:text-white"
-                  : "text-gray-400 hover:text-purple-300"
+                  ? "text-sky-300 hover:text-white"
+                  : "text-slate-400 hover:text-sky-300"
               }`}
               title="Add Subpage"
             >
@@ -437,7 +437,7 @@ export const NexusWorkbench: React.FC = () => {
             </button>
             <button
               onClick={(e) => handleDeleteNote(note.id, e)}
-              className="p-1 text-gray-400 hover:text-red-400 hover:bg-gray-700/60 rounded transition touch-manipulation"
+              className="p-1 text-slate-400 hover:text-red-400 hover:bg-slate-800/80 rounded transition touch-manipulation"
               title="Delete Note"
             >
               <Trash2 className="w-3.5 h-3.5" />
@@ -461,61 +461,63 @@ export const NexusWorkbench: React.FC = () => {
   );
 
   return (
-    <div className="flex h-screen w-screen bg-[#0d1117] text-gray-100 overflow-hidden font-sans relative">
+    <div className="flex h-screen w-screen bg-[#06080F] text-slate-100 overflow-hidden font-sans relative">
       {/* 1. Mobile Backdrop for Sidebar Drawer */}
       {isSidebarOpen && (
         <div
           onClick={() => setIsSidebarOpen(false)}
-          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-30 md:hidden"
+          className="fixed inset-0 bg-black/70 backdrop-blur-xs z-30 md:hidden"
         />
       )}
 
       {/* 2. Left Sidebar: Folder & Subpage Tree Navigator */}
       <aside
-        className={`fixed md:static inset-y-0 left-0 z-40 w-72 md:w-64 flex-shrink-0 bg-[#161b22] border-r border-gray-800 flex flex-col h-full transition-transform duration-200 ease-in-out ${
+        className={`fixed md:static inset-y-0 left-0 z-40 w-72 md:w-64 flex-shrink-0 bg-[#0B0F19] border-r border-slate-800/80 flex flex-col h-full transition-transform duration-200 ease-in-out ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full md:hidden"
         }`}
       >
-        {/* Vault Header & Create Actions */}
-        <div className="px-4 py-3.5 border-b border-gray-800 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center font-bold text-xs text-white shadow-md">
-              N
-            </div>
-            <span className="font-semibold text-sm tracking-tight text-gray-100">
-              Nexus Vault
+        {/* Astro Brand Header & Create Actions */}
+        <div className="px-4 py-3.5 border-b border-slate-800/80 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <img
+              src="/astro-logo.png"
+              alt="Astro"
+              className="h-6 w-auto object-contain filter drop-shadow-[0_0_8px_rgba(56,189,248,0.45)]"
+            />
+            <span className="font-bold text-base tracking-tight text-white font-sans">
+              Astro
             </span>
           </div>
 
           <div className="flex items-center gap-1">
             <button
               onClick={() => handleCreateNewNote()}
-              className="p-1 rounded-md bg-purple-600/80 hover:bg-purple-600 text-white transition shadow-sm"
+              className="p-1.5 rounded-md bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white transition shadow-sm shadow-sky-500/20"
               title="New Note"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => setIsCreatingFolder(true)}
-              className="p-1 rounded-md bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition"
+              className="p-1.5 rounded-md bg-[#162032] hover:bg-[#1e2c45] text-slate-300 hover:text-white transition"
               title="New Folder"
             >
-              <FolderPlus className="w-4 h-4" />
+              <FolderPlus className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => setIsSidebarOpen(false)}
-              className="p-1 rounded-md text-gray-400 hover:text-white md:hidden"
+              className="p-1.5 rounded-md text-slate-400 hover:text-white md:hidden"
               title="Close Menu"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
 
         {/* Search bar inside sidebar */}
         <div className="px-3 pt-2.5 pb-1">
-          <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#0d1117] rounded-lg border border-gray-800 text-xs">
-            <Search className="w-3.5 h-3.5 text-gray-500" />
+          <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#06080F] rounded-lg border border-slate-800/80 text-xs">
+            <Search className="w-3.5 h-3.5 text-slate-500" />
             <input
               type="text"
               placeholder="Filter notes..."
@@ -528,8 +530,8 @@ export const NexusWorkbench: React.FC = () => {
 
         {/* Inline Folder Creation Form */}
         {isCreatingFolder && (
-          <div className="px-3 py-2 bg-[#0d1117] border-y border-gray-800 flex items-center gap-1.5">
-            <FolderIcon className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+          <div className="px-3 py-2 bg-[#06080F] border-y border-slate-800/80 flex items-center gap-1.5">
+            <FolderIcon className="w-3.5 h-3.5 text-sky-400 shrink-0" />
             <input
               type="text"
               placeholder="Folder name..."
@@ -544,13 +546,13 @@ export const NexusWorkbench: React.FC = () => {
             />
             <button
               onClick={handleCreateFolderAction}
-              className="px-2 py-0.5 rounded bg-purple-600 text-white text-[10px] hover:bg-purple-500"
+              className="px-2 py-0.5 rounded bg-sky-600 text-white text-[10px] hover:bg-sky-500 font-medium"
             >
               Add
             </button>
             <button
               onClick={() => setIsCreatingFolder(false)}
-              className="p-0.5 text-gray-500 hover:text-gray-300"
+              className="p-0.5 text-slate-500 hover:text-slate-300"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -577,10 +579,10 @@ export const NexusWorkbench: React.FC = () => {
                     {/* Folder Row */}
                     <div
                       onClick={() => toggleFolderCollapse(folder.id)}
-                      className="group flex items-center justify-between px-2 py-1.5 rounded-md hover:bg-[#1f242c] cursor-pointer text-gray-400 hover:text-gray-200 transition"
+                      className="group flex items-center justify-between px-2 py-1.5 rounded-md hover:bg-[#111827] cursor-pointer text-slate-400 hover:text-slate-200 transition"
                     >
                       <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                        <button className="p-0.5 text-gray-500 group-hover:text-gray-300">
+                        <button className="p-0.5 text-slate-500 group-hover:text-slate-300">
                           {isCollapsed ? (
                             <ChevronRight className="w-3.5 h-3.5" />
                           ) : (
@@ -588,14 +590,14 @@ export const NexusWorkbench: React.FC = () => {
                           )}
                         </button>
                         {isCollapsed ? (
-                          <FolderIcon className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                          <FolderIcon className="w-3.5 h-3.5 text-sky-400 shrink-0" />
                         ) : (
-                          <FolderOpen className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                          <FolderOpen className="w-3.5 h-3.5 text-sky-400 shrink-0" />
                         )}
-                        <span className="font-semibold text-xs truncate text-gray-300">
+                        <span className="font-semibold text-xs truncate text-slate-300">
                           {folder.name}
                         </span>
-                        <span className="text-[10px] text-gray-600 ml-1">
+                        <span className="text-[10px] text-slate-500 ml-1">
                           ({folderNotes.length})
                         </span>
                       </div>
@@ -606,14 +608,14 @@ export const NexusWorkbench: React.FC = () => {
                             e.stopPropagation();
                             handleCreateNewNote("Untitled Note", folder.id);
                           }}
-                          className="p-1 text-gray-400 hover:text-purple-300 hover:bg-gray-700/60 rounded transition touch-manipulation"
+                          className="p-1 text-slate-400 hover:text-sky-300 hover:bg-slate-800/80 rounded transition touch-manipulation"
                           title="Add Note in Folder"
                         >
                           <Plus className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={(e) => handleDeleteFolder(folder.id, e)}
-                          className="p-1 text-gray-400 hover:text-red-400 hover:bg-gray-700/60 rounded transition touch-manipulation"
+                          className="p-1 text-slate-400 hover:text-red-400 hover:bg-slate-800/80 rounded transition touch-manipulation"
                           title="Delete Folder"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -629,7 +631,7 @@ export const NexusWorkbench: React.FC = () => {
                         ) : (
                           <button
                             onClick={() => handleCreateNewNote("Untitled Note", folder.id)}
-                            className="flex items-center gap-1.5 pl-7 py-1.5 text-[11px] text-gray-500 hover:text-purple-300 transition text-left w-full touch-manipulation"
+                            className="flex items-center gap-1.5 pl-7 py-1.5 text-[11px] text-slate-500 hover:text-sky-300 transition text-left w-full touch-manipulation"
                           >
                             <Plus className="w-3 h-3" />
                             <span>Add note to this folder</span>
@@ -643,11 +645,11 @@ export const NexusWorkbench: React.FC = () => {
 
               {/* 2. Unfiled Root Notes */}
               <div className="pt-2">
-                <div className="px-2 py-1 flex items-center justify-between text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                <div className="px-2 py-1 flex items-center justify-between text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                   <span>Notes</span>
                   <button
                     onClick={() => handleCreateNewNote()}
-                    className="p-1 text-gray-500 hover:text-purple-300 rounded hover:bg-gray-800 transition touch-manipulation"
+                    className="p-1 text-slate-400 hover:text-sky-300 rounded hover:bg-slate-800/80 transition touch-manipulation"
                     title="New Note"
                   >
                     <Plus className="w-3.5 h-3.5" />
@@ -662,25 +664,25 @@ export const NexusWorkbench: React.FC = () => {
         </div>
 
         {/* User Account & Quick Search Footer */}
-        <div className="p-3 border-t border-gray-800 bg-[#0d1117]/60 space-y-2">
+        <div className="p-3 border-t border-slate-800/80 bg-[#06080F]/80 space-y-2">
           {currentUser ? (
-            <div className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-[#161b22] border border-gray-800 text-xs">
+            <div className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-[#0E1424] border border-slate-800/80 text-xs">
               <div className="flex items-center gap-2 min-w-0">
-                <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-500 text-white font-bold flex items-center justify-center text-[10px] shrink-0">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-600 text-white font-bold flex items-center justify-center text-[10px] shrink-0 shadow-sm">
                   {currentUser.name ? currentUser.name[0].toUpperCase() : "U"}
                 </div>
                 <div className="min-w-0">
-                  <div className="text-gray-200 font-medium truncate text-xs leading-tight">
+                  <div className="text-slate-200 font-medium truncate text-xs leading-tight">
                     {currentUser.name}
                   </div>
-                  <div className="text-gray-500 text-[10px] truncate leading-tight">
+                  <div className="text-slate-500 text-[10px] truncate leading-tight">
                     {currentUser.email}
                   </div>
                 </div>
               </div>
               <button
                 onClick={handleLogout}
-                className="p-1 text-gray-500 hover:text-red-400 hover:bg-gray-800 rounded transition touch-manipulation"
+                className="p-1 text-slate-500 hover:text-red-400 hover:bg-slate-800/80 rounded transition touch-manipulation"
                 title="Log Out"
               >
                 <LogOut className="w-3.5 h-3.5" />
@@ -689,10 +691,10 @@ export const NexusWorkbench: React.FC = () => {
           ) : (
             <button
               onClick={() => setIsAuthModalOpen(true)}
-              className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-purple-950/40 border border-purple-800/50 text-purple-300 hover:bg-purple-900/40 hover:text-white transition text-xs group touch-manipulation"
+              className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-sky-950/40 border border-sky-800/50 text-sky-300 hover:bg-sky-900/40 hover:text-white transition text-xs group touch-manipulation shadow-sm shadow-sky-950/30"
             >
               <div className="flex items-center gap-2">
-                <Cloud className="w-3.5 h-3.5 text-purple-400" />
+                <Cloud className="w-3.5 h-3.5 text-sky-400" />
                 <span className="font-medium">Sign In to Cloud Sync</span>
               </div>
               <LogIn className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
@@ -701,13 +703,13 @@ export const NexusWorkbench: React.FC = () => {
 
           <button
             onClick={() => setIsPaletteOpen(true)}
-            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-[#161b22] border border-gray-800 text-gray-400 hover:text-white transition text-xs"
+            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-[#0E1424] border border-slate-800/80 text-slate-400 hover:text-white transition text-xs"
           >
             <div className="flex items-center gap-2">
-              <Search className="w-3.5 h-3.5" />
+              <Search className="w-3.5 h-3.5 text-slate-500" />
               <span>Search Notes</span>
             </div>
-            <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] bg-gray-800 rounded border border-gray-700">
+            <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] bg-slate-800/80 rounded border border-slate-700/60 text-slate-400">
               Ctrl+K
             </kbd>
           </button>
@@ -715,52 +717,52 @@ export const NexusWorkbench: React.FC = () => {
       </aside>
 
       {/* 3. Main Workbench Canvas */}
-      <main className="flex-1 flex flex-col h-full overflow-hidden">
+      <main className="flex-1 flex flex-col h-full overflow-hidden bg-[#06080F]">
         {/* Top Header Bar with Hierarchical Breadcrumbs */}
-        <header className="h-12 border-b border-gray-800 bg-[#161b22] px-3 sm:px-4 flex items-center justify-between z-10 flex-shrink-0">
+        <header className="h-12 border-b border-slate-800/80 bg-[#0B0F19]/90 backdrop-blur-md px-3 sm:px-4 flex items-center justify-between z-10 flex-shrink-0">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="p-1.5 rounded-md hover:bg-gray-800 text-gray-400 hover:text-white transition touch-manipulation"
+              className="p-1.5 rounded-md hover:bg-slate-800/80 text-slate-400 hover:text-white transition touch-manipulation"
               title="Toggle Menu"
             >
               <Menu className="w-4 h-4" />
             </button>
 
             {/* Hierarchical Breadcrumb Trail */}
-            <div className="flex items-center gap-1.5 text-xs text-gray-400 min-w-0 truncate">
+            <div className="flex items-center gap-1.5 text-xs text-slate-400 min-w-0 truncate">
               {breadcrumbs.map((crumb, i) => (
                 <React.Fragment key={crumb.id || i}>
                   {crumb.type === "note" && crumb.id ? (
                     <button
                       onClick={() => setActiveNoteId(crumb.id!)}
-                      className="text-purple-400 hover:text-purple-300 font-medium truncate max-w-[90px]"
+                      className="text-sky-400 hover:text-sky-300 font-medium truncate max-w-[90px]"
                     >
                       {crumb.label}
                     </button>
                   ) : (
-                    <span className="text-gray-400 font-medium truncate max-w-[90px]">
+                    <span className="text-slate-400 font-medium truncate max-w-[90px]">
                       {crumb.label}
                     </span>
                   )}
-                  <span className="text-gray-600">/</span>
+                  <span className="text-slate-600">/</span>
                 </React.Fragment>
               ))}
 
-              <span className="text-gray-400 truncate max-w-[120px] sm:max-w-xs">
+              <span className="text-slate-300 truncate max-w-[120px] sm:max-w-xs font-medium">
                 {activeNote?.title || "No Note"}
               </span>
             </div>
           </div>
 
           {/* View Mode Switcher */}
-          <div className="flex items-center gap-1 bg-[#0d1117] p-1 rounded-lg border border-gray-800 mr-2">
+          <div className="flex items-center gap-1 bg-[#06080F] p-1 rounded-lg border border-slate-800/80 mr-2">
             <button
               onClick={() => setViewMode("editor")}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs transition ${
                 viewMode === "editor"
-                  ? "bg-purple-900/60 text-purple-200 font-medium"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-sky-950/60 text-sky-200 border border-sky-800/50 font-medium shadow-sm"
+                  : "text-slate-400 hover:text-white"
               }`}
               title="Editor View"
             >
@@ -771,8 +773,8 @@ export const NexusWorkbench: React.FC = () => {
               onClick={() => setViewMode("split")}
               className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded text-xs transition ${
                 viewMode === "split"
-                  ? "bg-purple-900/60 text-purple-200 font-medium"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-sky-950/60 text-sky-200 border border-sky-800/50 font-medium shadow-sm"
+                  : "text-slate-400 hover:text-white"
               }`}
               title="Split View"
             >
@@ -783,10 +785,10 @@ export const NexusWorkbench: React.FC = () => {
               onClick={() => setViewMode("graph")}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs transition ${
                 viewMode === "graph"
-                  ? "bg-purple-900/60 text-purple-200 font-medium"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-sky-950/60 text-sky-200 border border-sky-800/50 font-medium shadow-sm"
+                  : "text-slate-400 hover:text-white"
               }`}
-              title="Hierarchy Graph View"
+              title="Constellation Graph View"
             >
               <Share2 className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Graph</span>
@@ -803,7 +805,7 @@ export const NexusWorkbench: React.FC = () => {
                   ? "bg-amber-950/40 text-amber-300 border-amber-800/50"
                   : isCloudConfigured
                   ? "bg-emerald-950/40 text-emerald-300 border-emerald-800/50 hover:bg-emerald-900/40"
-                  : "bg-gray-800/40 text-gray-400 border-gray-800 hover:text-white"
+                  : "bg-[#0E1424] text-slate-400 border-slate-800/80 hover:text-white hover:border-slate-700"
               }`}
               title={
                 currentUser
@@ -816,9 +818,9 @@ export const NexusWorkbench: React.FC = () => {
               ) : currentUser ? (
                 <Cloud className="w-3.5 h-3.5 text-emerald-400" />
               ) : (
-                <CloudOff className="w-3.5 h-3.5 text-gray-500" />
+                <CloudOff className="w-3.5 h-3.5 text-slate-500" />
               )}
-              <span className="hidden md:inline">
+              <span className="hidden md:inline font-medium">
                 {syncStatus === "syncing"
                   ? "Syncing"
                   : currentUser
@@ -832,12 +834,12 @@ export const NexusWorkbench: React.FC = () => {
               onClick={() => setIsRightDrawerOpen(!isRightDrawerOpen)}
               className={`flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1 rounded-md text-xs transition border ${
                 isRightDrawerOpen
-                  ? "bg-purple-950/60 text-purple-300 border-purple-800/60"
-                  : "bg-gray-800/40 text-gray-400 border-gray-800 hover:text-white"
+                  ? "bg-indigo-950/60 text-indigo-300 border-indigo-800/60 shadow-sm"
+                  : "bg-[#0E1424] text-slate-400 border-slate-800/80 hover:text-white"
               }`}
               title="Toggle AI Copilot"
             >
-              <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+              <Sparkles className="w-3.5 h-3.5 text-sky-400" />
               <span className="hidden md:inline">AI Copilot</span>
             </button>
 
@@ -845,7 +847,7 @@ export const NexusWorkbench: React.FC = () => {
             {activeNote && (
               <button
                 onClick={(e) => handleDeleteNote(activeNote.id, e)}
-                className="p-1.5 rounded-md text-gray-400 hover:text-red-400 hover:bg-gray-800 transition touch-manipulation"
+                className="p-1.5 rounded-md text-slate-400 hover:text-red-400 hover:bg-slate-800/80 transition touch-manipulation"
                 title="Delete Current Note"
               >
                 <Trash2 className="w-3.5 h-3.5" />
@@ -913,14 +915,14 @@ export const NexusWorkbench: React.FC = () => {
                 onClick={() => setIsRightDrawerOpen(false)}
                 className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 md:hidden"
               />
-              <aside className="fixed md:static inset-y-0 right-0 z-50 w-full sm:w-80 flex-shrink-0 bg-[#161b22] border-l border-gray-800 flex flex-col h-full shadow-2xl md:shadow-none">
-                <div className="flex items-center justify-between px-3 py-2 border-b border-gray-800 bg-[#0d1117]/60 md:hidden">
-                  <span className="text-xs font-medium text-gray-200">
-                    AI Copilot
+              <aside className="fixed md:static inset-y-0 right-0 z-50 w-full sm:w-80 flex-shrink-0 bg-[#0B0F19] border-l border-slate-800/80 flex flex-col h-full shadow-2xl md:shadow-none">
+                <div className="flex items-center justify-between px-3 py-2 border-b border-slate-800/80 bg-[#06080F]/60 md:hidden">
+                  <span className="text-xs font-medium text-slate-200">
+                    Astro AI Copilot
                   </span>
                   <button
                     onClick={() => setIsRightDrawerOpen(false)}
-                    className="p-1 text-gray-400 hover:text-white"
+                    className="p-1 text-slate-400 hover:text-white"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -947,7 +949,7 @@ export const NexusWorkbench: React.FC = () => {
       {/* 5. Mobile Floating Action Button (FAB) for Quick Note Creation */}
       <button
         onClick={() => handleCreateNewNote()}
-        className="md:hidden fixed bottom-5 right-5 z-20 w-12 h-12 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 text-white shadow-xl shadow-purple-950/50 flex items-center justify-center active:scale-95 transition"
+        className="md:hidden fixed bottom-5 right-5 z-20 w-12 h-12 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-600 text-white shadow-xl shadow-sky-950/60 flex items-center justify-center active:scale-95 transition"
         title="Create new note"
       >
         <Plus className="w-5 h-5" />

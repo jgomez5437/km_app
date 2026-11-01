@@ -931,6 +931,8 @@ export const NexusWorkbench: React.FC = () => {
                   <NexusAIAssistant
                     activeNote={activeNote}
                     allNotes={notes}
+                    folders={folders}
+                    currentUser={currentUser}
                     onOpenNote={(id) => {
                       setActiveNoteId(id);
                       if (typeof window !== "undefined" && window.innerWidth < 768) {
@@ -946,16 +948,7 @@ export const NexusWorkbench: React.FC = () => {
         </div>
       </main>
 
-      {/* 5. Mobile Floating Action Button (FAB) for Quick Note Creation */}
-      <button
-        onClick={() => handleCreateNewNote()}
-        className="md:hidden fixed bottom-5 right-5 z-20 w-12 h-12 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-600 text-white shadow-xl shadow-sky-950/60 flex items-center justify-center active:scale-95 transition"
-        title="Create new note"
-      >
-        <Plus className="w-5 h-5" />
-      </button>
-
-      {/* 6. Global Command Palette Modal */}
+      {/* 5. Global Command Palette Modal */}
       <CommandPalette
         isOpen={isPaletteOpen}
         onClose={() => setIsPaletteOpen(false)}

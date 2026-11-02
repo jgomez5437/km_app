@@ -117,7 +117,7 @@ export const NexusWorkbench: React.FC = () => {
       visited.add(currentParentId);
       const parent = notes.find((n) => n.id === currentParentId);
       if (!parent) break;
-      ancestors.unshift({ id: parent.id, label: parent.title, type: "note" });
+      ancestors.unshift({ id: parent.id, label: parent.title.trim() || "Untitled Note", type: "note" });
       currentParentId = parent.parentId;
     }
 
@@ -192,7 +192,7 @@ export const NexusWorkbench: React.FC = () => {
 
   const handleCreateNewNote = useCallback(
     (title?: string, folderId?: string, parentId?: string) => {
-      const newNote = createNewNote(title || "Untitled Note", folderId, parentId);
+      const newNote = createNewNote(title ?? "", folderId, parentId);
       const updated = [newNote, ...notes];
       setNotes(updated);
       saveNotes(updated);
@@ -238,7 +238,7 @@ export const NexusWorkbench: React.FC = () => {
   }, [handleCreateNewNote]);
 
   const handleCreateSubpage = (parentNoteId: string, folderId?: string) => {
-    handleCreateNewNote("Untitled Subpage", folderId, parentNoteId);
+    handleCreateNewNote("", folderId, parentNoteId);
   };
 
   const handleCreateFolderAction = () => {
@@ -396,7 +396,7 @@ export const NexusWorkbench: React.FC = () => {
                 isActive ? "text-sky-400" : "text-slate-500"
               }`}
             />
-            <span className="truncate">{note.title}</span>
+            <span className="truncate">{note.title.trim() || "Untitled Note"}</span>
           </div>
 
           <div
@@ -443,7 +443,7 @@ export const NexusWorkbench: React.FC = () => {
 
   // Filter notes for search
   const filteredNotes = notes.filter((n) =>
-    n.title.toLowerCase().includes(searchQuery.toLowerCase())
+    (n.title.trim() || "Untitled Note").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Valid folder and note ID sets so notes with orphaned folderId/parentId never disappear from UI
@@ -604,7 +604,7 @@ export const NexusWorkbench: React.FC = () => {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleCreateNewNote("Untitled Note", folder.id);
+                            handleCreateNewNote("", folder.id);
                           }}
                           className="p-1.5 text-slate-400 hover:text-sky-300 hover:bg-slate-800/80 rounded-md transition touch-manipulation"
                           title="Add Note in Folder"
@@ -628,7 +628,7 @@ export const NexusWorkbench: React.FC = () => {
                           folderNotes.map((note) => renderNoteTreeItem(note, 1))
                         ) : (
                           <button
-                            onClick={() => handleCreateNewNote("Untitled Note", folder.id)}
+                            onClick={() => handleCreateNewNote("", folder.id)}
                             className="flex items-center gap-2 pl-9 py-2 text-xs sm:text-sm text-slate-500 hover:text-sky-300 transition text-left w-full touch-manipulation"
                           >
                             <Plus className="w-3.5 h-3.5" />
@@ -752,7 +752,7 @@ export const NexusWorkbench: React.FC = () => {
               ))}
 
               <span className="text-slate-200 truncate max-w-[140px] sm:max-w-md font-semibold">
-                {activeNote?.title || "No Note"}
+                {activeNote?.title?.trim() || "Untitled Note"}
               </span>
             </div>
           </div>
@@ -826,6 +826,7 @@ export const NexusWorkbench: React.FC = () => {
             {activeNote ? (
               <div className="flex-1 min-h-0 w-full flex flex-col overflow-hidden">
                 <NexusEditor
+                  noteId={activeNote.id}
                   initialContent={activeNote.content}
                   noteTitle={activeNote.title}
                   onUpdateTitle={handleUpdateTitle}

@@ -54,12 +54,12 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   const filteredNotes = notes.filter(
     (n) =>
-      n.title.toLowerCase().includes(query.toLowerCase()) ||
+      (n.title.trim() || "Untitled Note").toLowerCase().includes(query.toLowerCase()) ||
       (n.tags || []).some((t) => t.toLowerCase().includes(query.toLowerCase()))
   );
 
   const exactMatch = notes.some(
-    (n) => n.title.toLowerCase() === query.trim().toLowerCase()
+    (n) => (n.title.trim() || "Untitled Note").toLowerCase() === query.trim().toLowerCase()
   );
 
   return (
@@ -123,7 +123,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               >
                 <FileText className="w-4.5 h-4.5 text-slate-400 group-hover:text-sky-400 shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-slate-200 truncate group-hover:text-white text-sm">{note.title}</div>
+                  <div className="font-medium text-slate-200 truncate group-hover:text-white text-sm">{note.title.trim() || "Untitled Note"}</div>
                   <div className="text-slate-400 text-xs flex items-center gap-2 mt-0.5">
                     {note.parentId && <span className="text-emerald-400">Subpage</span>}
                     {note.tags && note.tags.length > 0 && (

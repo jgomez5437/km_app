@@ -79,6 +79,27 @@ body {
   height: 1.15rem;
 }
 
+.tiptap ul[data-type="taskList"] li > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.tiptap ul[data-type="taskList"] li > div > p {
+  margin-top: 0;
+  margin-bottom: 0;
+  min-height: 1.5rem;
+}
+
+.tiptap li > p {
+  margin-top: 0.15rem;
+  margin-bottom: 0.15rem;
+}
+
+.tiptap ul[data-type="taskList"] li[data-checked="true"] > div {
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+
 .tiptap blockquote {
   border-left: 3px solid #38bdf8;
   padding-left: 1rem;

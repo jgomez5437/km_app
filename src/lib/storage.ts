@@ -112,6 +112,20 @@ export const INITIAL_SAMPLE_NOTES: Note[] = [
   },
 ];
 
+export function isCorruptedHtmlContent(content: string): boolean {
+  if (!content) return false;
+  const trimmed = content.trim();
+  if (/^<p>\s*(?:<br\s*\/?>)?\s*<\/p>$/i.test(trimmed)) return true;
+  if (/^<ul[^>]*>\s*<li[^>]*>\s*<p>\s*<\/p>\s*<\/li>\s*<\/ul>$/i.test(trimmed)) return true;
+  if (/^<ol[^>]*>\s*<li[^>]*>\s*<p>\s*<\/p>\s*<\/li>\s*<\/ol>$/i.test(trimmed)) return true;
+  if (/^<blockquote[^>]*>\s*<p>\s*<\/p>\s*<\/blockquote>$/i.test(trimmed)) return true;
+  return false;
+}
+
+export function sanitizeCorruptedContent(content: string): string {
+  return isCorruptedHtmlContent(content) ? "" : content;
+}
+
 // Folders Management
 export function loadFolders(): Folder[] {
   if (typeof window === "undefined") return INITIAL_SAMPLE_FOLDERS;
@@ -182,20 +196,32 @@ export function loadNotes(): Note[] {
       return INITIAL_SAMPLE_NOTES;
     }
     // Heal any duplicate note IDs (e.g. multiple "untitled-note" entries)
+    // and corrupted empty HTML content tags (e.g. "<p></p>")
     const seen = new Set<string>();
     let mutated = false;
     const healed = parsed.map((n: Note) => {
       if (!n || typeof n.id !== "string") return n;
-      if (seen.has(n.id)) {
+      let note = n;
+      if (seen.has(note.id)) {
         mutated = true;
-        return {
-          ...n,
-          id: generateUniqueId("note", n.title || "untitled"),
+        note = {
+          ...note,
+          id: generateUniqueId("note", note.title || "untitled"),
           updatedAt: Date.now(),
         };
       }
-      seen.add(n.id);
-      return n;
+      seen.add(note.id);
+
+      if (typeof note.content === "string" && isCorruptedHtmlContent(note.content)) {
+        mutated = true;
+        note = {
+          ...note,
+          content: "",
+          updatedAt: Date.now(),
+        };
+      }
+
+      return note;
     });
     if (mutated) {
       saveNotes(healed, false);
@@ -247,15 +273,15 @@ export function updateNoteInVault(
 }
 
 export function createNewNote(
-  title = "Untitled Note",
+  title = "",
   folderId?: string,
   parentId?: string
 ): Note {
   const now = Date.now();
-  const content = "Start typing your thoughts here...";
+  const content = "";
 
   return {
-    id: generateUniqueId("note", title),
+    id: generateUniqueId("note", title || "untitled"),
     title,
     content,
     folderId,

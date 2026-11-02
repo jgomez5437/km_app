@@ -353,17 +353,17 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#0B0F19] border-l border-slate-800/80 text-slate-200 text-xs">
+    <div className="flex flex-col h-full bg-[#0B0F19] border-l border-slate-800/80 text-slate-200 text-sm">
       {/* Header Tabs */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-slate-800/80 bg-[#06080F]/60">
-        <div className="flex items-center gap-1.5 font-medium text-slate-200">
-          <Sparkles className="w-4 h-4 text-sky-400" />
-          <span>Astro AI Copilot</span>
+      <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-slate-800/80 bg-[#06080F]/60">
+        <div className="flex items-center gap-2 font-medium text-slate-200">
+          <Sparkles className="w-4.5 h-4.5 text-sky-400" />
+          <span className="text-sm font-semibold">Astro AI Copilot</span>
         </div>
-        <div className="flex items-center gap-1 bg-[#06080F] p-0.5 rounded border border-slate-800">
+        <div className="flex items-center gap-1 bg-[#06080F] p-0.5 rounded-lg border border-slate-800">
           <button
             onClick={() => setTab("ask")}
-            className={`px-2 py-0.5 rounded transition ${
+            className={`px-2.5 py-1 rounded-md text-xs font-medium transition ${
               tab === "ask"
                 ? "bg-sky-950/70 text-sky-200 border border-sky-800/60"
                 : "text-slate-400 hover:text-white"
@@ -373,7 +373,7 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
           </button>
           <button
             onClick={() => setTab("suggest")}
-            className={`px-2 py-0.5 rounded transition ${
+            className={`px-2.5 py-1 rounded-md text-xs font-medium transition ${
               tab === "suggest"
                 ? "bg-sky-950/70 text-sky-200 border border-sky-800/60"
                 : "text-slate-400 hover:text-white"
@@ -383,14 +383,14 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
           </button>
           <button
             onClick={() => setTab("settings")}
-            className={`p-1 rounded transition ${
+            className={`p-1.5 rounded-md transition ${
               tab === "settings"
                 ? "bg-sky-950/70 text-sky-200 border border-sky-800/60"
                 : "text-slate-400 hover:text-white"
             }`}
             title="AI Engine Settings"
           >
-            <Settings2 className="w-3.5 h-3.5" />
+            <Settings2 className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -399,24 +399,24 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
       {tab === "ask" && (
         <div className="flex-1 flex flex-col h-full overflow-hidden">
           {/* Messages Container */}
-          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+          <div className="flex-1 overflow-y-auto p-3.5 space-y-3.5">
             {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-6 text-center space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-sky-950/50 border border-sky-800/50 flex items-center justify-center">
-                  <Bot className="w-5 h-5 text-sky-400" />
+              <div className="flex flex-col items-center justify-center py-6 text-center space-y-3.5">
+                <div className="w-11 h-11 rounded-xl bg-sky-950/50 border border-sky-800/50 flex items-center justify-center">
+                  <Bot className="w-5.5 h-5.5 text-sky-400" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-white tracking-tight">
+                  <h4 className="text-base font-semibold text-white tracking-tight">
                     Chat with your Astro Vault
                   </h4>
-                  <p className="text-[11px] text-slate-400 max-w-xs mt-1">
+                  <p className="text-xs text-slate-400 max-w-xs mt-1 leading-relaxed">
                     Ask questions across all notes, synthesize research, or uncover connections.
                   </p>
                 </div>
 
                 {!activeKey && provider !== "local-ollama" && (
-                  <div className="w-full max-w-xs p-2.5 bg-sky-950/40 border border-sky-800/50 rounded-lg text-left text-[11px] text-sky-200 flex items-start gap-2 mt-2">
-                    <AlertCircle className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
+                  <div className="w-full max-w-xs p-3 bg-sky-950/40 border border-sky-800/50 rounded-lg text-left text-xs text-sky-200 flex items-start gap-2.5 mt-2">
+                    <AlertCircle className="w-4.5 h-4.5 text-sky-400 shrink-0 mt-0.5" />
                     <div className="flex-1">
                       <span>No API key saved yet. Add your OpenAI or Gemini key to enable real AI.</span>
                       <button
@@ -429,8 +429,8 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
                   </div>
                 )}
 
-                <div className="w-full max-w-xs space-y-1.5 pt-2 text-left">
-                  <span className="text-[10px] uppercase font-semibold text-slate-500 tracking-wider block">
+                <div className="w-full max-w-xs space-y-2 pt-2 text-left">
+                  <span className="text-[11px] uppercase font-semibold text-slate-400 tracking-wider block">
                     Quick Prompts
                   </span>
                   {[
@@ -441,10 +441,10 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
                     <button
                       key={preset}
                       onClick={() => handleAskVault(preset)}
-                      className="w-full text-left px-2.5 py-1.5 rounded-lg bg-[#06080F] hover:bg-slate-800/80 border border-slate-800 text-slate-300 hover:text-white transition text-[11px] flex items-center justify-between group"
+                      className="w-full text-left px-3 py-2 rounded-lg bg-[#06080F] hover:bg-slate-800/80 border border-slate-800 text-slate-300 hover:text-white transition text-xs flex items-center justify-between group"
                     >
                       <span className="truncate">{preset}</span>
-                      <ArrowRight className="w-3 h-3 text-slate-500 group-hover:text-sky-400 shrink-0 ml-1" />
+                      <ArrowRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-sky-400 shrink-0 ml-1.5" />
                     </button>
                   ))}
                 </div>
@@ -457,21 +457,21 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
                     m.role === "user" ? "items-end" : "items-start"
                   }`}
                 >
-                  <div className="flex items-center gap-1.5 mb-1 px-1">
+                  <div className="flex items-center gap-2 mb-1 px-1">
                     {m.role === "user" ? (
                       <>
-                        <span className="text-[10px] text-slate-500">You</span>
-                        <UserIcon className="w-3 h-3 text-slate-400" />
+                        <span className="text-xs text-slate-400">You</span>
+                        <UserIcon className="w-3.5 h-3.5 text-slate-400" />
                       </>
                     ) : (
                       <>
-                        <Bot className="w-3 h-3 text-sky-400" />
-                        <span className="text-[10px] text-slate-400 font-medium">Astro AI</span>
+                        <Bot className="w-3.5 h-3.5 text-sky-400" />
+                        <span className="text-xs text-slate-300 font-medium">Astro AI</span>
                       </>
                     )}
                   </div>
                   <div
-                    className={`max-w-[92%] px-3 py-2 rounded-xl text-xs leading-relaxed whitespace-pre-wrap ${
+                    className={`max-w-[92%] px-3.5 py-2.5 rounded-xl text-sm leading-relaxed whitespace-pre-wrap ${
                       m.role === "user"
                         ? "bg-sky-950/70 text-sky-100 border border-sky-800/60 rounded-tr-xs"
                         : "bg-[#06080F] text-slate-200 border border-slate-800/80 rounded-tl-xs shadow-md"
@@ -484,8 +484,8 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
             )}
 
             {isProcessing && (
-              <div className="flex items-center gap-2 p-2 bg-[#06080F] rounded-lg border border-slate-800/80 text-sky-400 text-xs w-fit">
-                <Sparkles className="w-3.5 h-3.5 animate-spin" />
+              <div className="flex items-center gap-2.5 p-2.5 bg-[#06080F] rounded-lg border border-slate-800/80 text-sky-400 text-xs w-fit">
+                <Sparkles className="w-4 h-4 animate-spin" />
                 <span>Astro AI is reading vault notes and synthesizing...</span>
               </div>
             )}
@@ -493,10 +493,10 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
           </div>
 
           {/* Chat Footer Toolbar & Input */}
-          <div className="p-2 border-t border-slate-800/80 bg-[#06080F]/80">
+          <div className="p-2.5 border-t border-slate-800/80 bg-[#06080F]/80">
             {messages.length > 0 && (
-              <div className="flex items-center justify-between pb-1.5 px-1">
-                <span className="text-[10px] text-slate-500">
+              <div className="flex items-center justify-between pb-2 px-1">
+                <span className="text-xs text-slate-400">
                   Model: {
                     provider === "gemini"
                       ? (activeModelUsed?.includes("2.5-pro") ? "Gemini 2.5 Pro" : activeModelUsed?.includes("2.0") ? "Gemini 2.0 Flash" : "Gemini 2.5 Flash")
@@ -507,15 +507,15 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
                 </span>
                 <button
                   onClick={() => setMessages([])}
-                  className="text-[10px] text-slate-500 hover:text-slate-300 flex items-center gap-1 transition"
+                  className="text-xs text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition"
                   title="Clear conversation"
                 >
-                  <RotateCcw className="w-2.5 h-2.5" />
+                  <RotateCcw className="w-3 h-3" />
                   <span>Reset Chat</span>
                 </button>
               </div>
             )}
-            <div className="flex items-center gap-1.5 bg-[#0B0F19] p-1.5 rounded-lg border border-slate-800 focus-within:border-sky-500/80 transition">
+            <div className="flex items-center gap-2 bg-[#0B0F19] p-2 rounded-xl border border-slate-800 focus-within:border-sky-500/80 transition">
               <input
                 type="text"
                 placeholder="Ask your vault anything..."
@@ -523,15 +523,15 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleAskVault()}
                 disabled={isProcessing}
-                className="flex-1 bg-transparent border-none text-slate-100 text-xs px-2 focus:outline-none placeholder-slate-500 disabled:opacity-50"
+                className="flex-1 bg-transparent border-none text-slate-100 text-sm px-2 focus:outline-none placeholder-slate-500 disabled:opacity-50"
               />
               <button
                 onClick={() => handleAskVault()}
                 disabled={!query.trim() || isProcessing}
-                className="p-1.5 rounded-md bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white transition disabled:opacity-40 disabled:hover:from-sky-500 disabled:hover:to-indigo-600 shadow-xs"
+                className="p-2 rounded-lg bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white transition disabled:opacity-40 disabled:hover:from-sky-500 disabled:hover:to-indigo-600 shadow-xs"
                 title="Send query"
               >
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -542,50 +542,50 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
       {tab === "suggest" && (
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           <div>
-            <h4 className="text-slate-400 font-semibold uppercase text-[10px] tracking-wider mb-2">
+            <h4 className="text-slate-400 font-semibold uppercase text-xs tracking-wider mb-2">
               Auto-Link Recommendations
             </h4>
-            <p className="text-slate-400 text-[11px] mb-3">
+            <p className="text-slate-400 text-xs mb-3">
               Unlinked concepts in your vault matching <strong>{activeNote.title}</strong>:
             </p>
 
             {suggestedLinks.length === 0 ? (
-              <div className="bg-[#06080F] p-3 rounded-lg border border-slate-800 text-slate-400 text-center text-xs">
+              <div className="bg-[#06080F] p-3.5 rounded-lg border border-slate-800 text-slate-400 text-center text-sm">
                 All relevant references appear to be linked! Create more notes to uncover new intersections.
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {suggestedLinks.map(({ note, reason }) => (
                   <div
                     key={note.id}
-                    className="p-2.5 rounded-lg bg-[#06080F] border border-slate-800/80 hover:border-sky-600/50 transition flex flex-col gap-1.5"
+                    className="p-3 rounded-lg bg-[#06080F] border border-slate-800/80 hover:border-sky-600/50 transition flex flex-col gap-2"
                   >
                     <div className="flex items-center justify-between">
                       <button
                         onClick={() => onOpenNote(note.id)}
-                        className="font-medium text-sky-300 hover:underline flex items-center gap-1 text-left"
+                        className="font-medium text-sky-300 hover:underline flex items-center gap-1.5 text-left text-sm"
                       >
                         <span>[[{note.title}]]</span>
-                        <ChevronRight className="w-3 h-3 text-slate-500" />
+                        <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
                       </button>
                       <button
                         onClick={() => handleLinkAction(note.title)}
-                        className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-sky-950/60 hover:bg-sky-900 text-sky-300 border border-sky-800/50 text-[10px] transition"
+                        className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-sky-950/60 hover:bg-sky-900 text-sky-300 border border-sky-800/50 text-xs transition font-medium"
                       >
                         {copiedLink === note.title ? (
                           <>
-                            <Check className="w-2.5 h-2.5 text-emerald-400" />
+                            <Check className="w-3 h-3 text-emerald-400" />
                             <span>Linked</span>
                           </>
                         ) : (
                           <>
-                            <LinkIcon className="w-2.5 h-2.5" />
+                            <LinkIcon className="w-3 h-3" />
                             <span>Link</span>
                           </>
                         )}
                       </button>
                     </div>
-                    <span className="text-[10px] text-slate-400">{reason}</span>
+                    <span className="text-xs text-slate-400">{reason}</span>
                   </div>
                 ))}
               </div>
@@ -598,19 +598,19 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
       {tab === "settings" && (
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="text-slate-300 font-semibold text-xs tracking-tight">
+            <h4 className="text-slate-200 font-semibold text-sm tracking-tight">
               AI Engine Configuration
             </h4>
             {savedFeedback && (
-              <span className="text-[11px] text-emerald-400 font-medium flex items-center gap-1 animate-in fade-in">
-                <CheckCircle2 className="w-3.5 h-3.5" />
+              <span className="text-xs text-emerald-400 font-medium flex items-center gap-1.5 animate-in fade-in">
+                <CheckCircle2 className="w-4 h-4" />
                 <span>Saved to Browser</span>
               </span>
             )}
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
               AI Provider
             </label>
             <select
@@ -625,7 +625,7 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
                 setModel(defaultNextModel);
                 saveSettings({ provider: nextProvider, model: defaultNextModel });
               }}
-              className="w-full bg-[#06080F] border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500 transition"
+              className="w-full bg-[#06080F] border border-slate-800 rounded-lg px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-sky-500 transition"
             >
               <option value="gemini">Google Gemini (Gemini 2.5 Flash / Pro)</option>
               <option value="openai">OpenAI (GPT-4o / GPT-4o-mini)</option>
@@ -634,9 +634,9 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
           </div>
 
           {provider === "local-ollama" ? (
-            <div className="space-y-3">
+            <div className="space-y-3.5">
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
                   Ollama Endpoint
                 </label>
                 <input
@@ -645,15 +645,15 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
                   onChange={(e) => setEndpoint(e.target.value)}
                   onBlur={() => saveSettings()}
                   placeholder="http://localhost:11434"
-                  className="w-full bg-[#06080F] border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500 transition"
+                  className="w-full bg-[#06080F] border border-slate-800 rounded-lg px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-sky-500 transition"
                 />
-                <p className="text-[10px] text-slate-500 mt-1">
+                <p className="text-xs text-slate-500 mt-1.5">
                   Default: http://localhost:11434 (zero telemetry, runs locally on your machine).
                 </p>
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
                   Model Name
                 </label>
                 <input
@@ -662,23 +662,23 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
                   onChange={(e) => setModel(e.target.value)}
                   onBlur={() => saveSettings()}
                   placeholder="llama3, mistral, deepseek-r1"
-                  className="w-full bg-[#06080F] border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500 transition font-mono"
+                  className="w-full bg-[#06080F] border border-slate-800 rounded-lg px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-sky-500 transition font-mono"
                 />
               </div>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-3.5">
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-[11px] font-semibold text-slate-400">
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-semibold text-slate-300">
                     {provider === "gemini" ? "Google Gemini API Key" : "OpenAI API Key"}
                   </label>
                   <button
                     type="button"
                     onClick={() => setShowKey(!showKey)}
-                    className="text-[10px] text-slate-500 hover:text-slate-300 flex items-center gap-1"
+                    className="text-xs text-slate-400 hover:text-slate-200 flex items-center gap-1.5"
                   >
-                    {showKey ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                    {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                     <span>{showKey ? "Hide" : "Show"}</span>
                   </button>
                 </div>
@@ -698,7 +698,7 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
                       }
                     }}
                     onBlur={() => saveSettings()}
-                    className="w-full bg-[#06080F] border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500 transition font-mono pr-8"
+                    className="w-full bg-[#06080F] border border-slate-800 rounded-lg px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-sky-500 transition font-mono pr-12"
                   />
                   {(provider === "gemini" ? geminiKey : openaiKey) && (
                     <button
@@ -712,20 +712,20 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
                           saveSettings({ openaiKey: "" });
                         }
                       }}
-                      className="absolute right-2 top-2.5 text-slate-500 hover:text-slate-300 text-[10px]"
+                      className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-200 text-xs px-1"
                       title="Clear key"
                     >
                       Clear
                     </button>
                   )}
                 </div>
-                <p className="text-[10px] text-slate-500 mt-1">
+                <p className="text-xs text-slate-500 mt-1.5">
                   Your key is persisted securely in your local browser storage and never logged in the database.
                 </p>
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
                   Model
                 </label>
                 {provider === "gemini" ? (
@@ -745,7 +745,7 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
                         saveSettings({ model: val });
                       }
                     }}
-                    className="w-full bg-[#06080F] border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500 transition"
+                    className="w-full bg-[#06080F] border border-slate-800 rounded-lg px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-sky-500 transition"
                   >
                     <option value="gemini-2.5-flash">Gemini 2.5 Flash (Recommended: Fast & Intelligent)</option>
                     <option value="gemini-2.5-pro">Gemini 2.5 Pro (Deep Reasoning & Analysis)</option>
@@ -769,7 +769,7 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
                         saveSettings({ model: val });
                       }
                     }}
-                    className="w-full bg-[#06080F] border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500 transition"
+                    className="w-full bg-[#06080F] border border-slate-800 rounded-lg px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-sky-500 transition"
                   >
                     <option value="gpt-4o-mini">GPT-4o mini (Recommended: Fast & Efficient)</option>
                     <option value="gpt-4o">GPT-4o (Flagship Omni)</option>
@@ -789,7 +789,7 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
                     }}
                     onBlur={() => saveSettings()}
                     placeholder={provider === "gemini" ? "e.g. gemini-2.5-flash" : "e.g. gpt-4o-mini"}
-                    className="w-full mt-2 bg-[#06080F] border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500 transition font-mono"
+                    className="w-full mt-2 bg-[#06080F] border border-slate-800 rounded-lg px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-sky-500 transition font-mono"
                   />
                 )}
               </div>
@@ -799,9 +799,9 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
           <div className="pt-2">
             <button
               onClick={() => saveSettings()}
-              className="w-full py-2 px-3 rounded-lg bg-sky-950/60 hover:bg-sky-900/60 text-sky-300 border border-sky-800/60 font-medium text-xs transition flex items-center justify-center gap-1.5 active:scale-98"
+              className="w-full py-2.5 px-4 rounded-lg bg-sky-950/60 hover:bg-sky-900/60 text-sky-300 border border-sky-800/60 font-medium text-sm transition flex items-center justify-center gap-2 active:scale-98"
             >
-              <Check className="w-3.5 h-3.5" />
+              <Check className="w-4 h-4" />
               <span>Save AI Settings</span>
             </button>
           </div>

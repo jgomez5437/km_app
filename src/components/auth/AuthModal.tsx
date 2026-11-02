@@ -79,13 +79,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <img
               src="/astro-logo.png"
               alt="Astro"
-              className="h-7 w-auto object-contain filter drop-shadow-[0_0_8px_rgba(56,189,248,0.35)]"
+              className="h-8 w-auto object-contain filter drop-shadow-[0_0_8px_rgba(56,189,248,0.35)]"
             />
             <div>
-              <h2 className="text-base font-bold text-white tracking-tight">
+              <h2 className="text-lg font-bold text-white tracking-tight">
                 {mode === "login" ? "Welcome to Astro" : "Create your Astro Vault"}
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-sm text-slate-400">
                 {mode === "login"
                   ? "Log in to sync your interstellar vault"
                   : "Private cloud storage powered by Neon"}
@@ -94,9 +94,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition touch-manipulation"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition touch-manipulation"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -108,7 +108,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               setMode("login");
               setError(null);
             }}
-            className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition ${
+            className={`flex-1 py-2 text-sm font-semibold rounded-xl transition ${
               mode === "login"
                 ? "bg-sky-950/60 text-sky-200 border border-sky-800/60 shadow-xs"
                 : "text-slate-400 hover:text-white hover:bg-slate-800/50"
@@ -122,7 +122,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               setMode("signup");
               setError(null);
             }}
-            className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition ${
+            className={`flex-1 py-2 text-sm font-semibold rounded-xl transition ${
               mode === "signup"
                 ? "bg-sky-950/60 text-sky-200 border border-sky-800/60 shadow-xs"
                 : "text-slate-400 hover:text-white hover:bg-slate-800/50"
@@ -135,53 +135,53 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
-            <div className="p-3 bg-red-950/40 border border-red-800/50 rounded-lg flex items-start gap-2 text-xs text-red-300">
-              <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+            <div className="p-3 bg-red-950/40 border border-red-800/50 rounded-xl flex items-start gap-2.5 text-sm text-red-300">
+              <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
 
           {mode === "signup" && (
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">
                 Display Name (Optional)
               </label>
               <div className="relative">
-                <UserIcon className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+                <UserIcon className="w-4.5 h-4.5 text-slate-500 absolute left-3 top-3" />
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Alex"
-                  className="w-full pl-9 pr-3 py-2 bg-[#06080F] border border-slate-800 rounded-lg text-xs text-white placeholder-slate-600 focus:outline-none focus:border-sky-500 transition"
+                  className="w-full pl-10 pr-3.5 py-2.5 bg-[#06080F] border border-slate-800 rounded-xl text-sm text-white placeholder-slate-600 focus:outline-none focus:border-sky-500 transition"
                 />
               </div>
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1.5">
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">
               Email Address
             </label>
             <div className="relative">
-              <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+              <Mail className="w-4.5 h-4.5 text-slate-500 absolute left-3 top-3" />
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@domain.com"
-                className="w-full pl-9 pr-3 py-2 bg-[#06080F] border border-slate-800 rounded-lg text-xs text-white placeholder-slate-600 focus:outline-none focus:border-sky-500 transition"
+                className="w-full pl-10 pr-3.5 py-2.5 bg-[#06080F] border border-slate-800 rounded-xl text-sm text-white placeholder-slate-600 focus:outline-none focus:border-sky-500 transition"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1.5">
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">
               Password
             </label>
             <div className="relative">
-              <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+              <Lock className="w-4.5 h-4.5 text-slate-500 absolute left-3 top-3" />
               <input
                 type="password"
                 required
@@ -189,7 +189,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Minimum 6 characters"
-                className="w-full pl-9 pr-3 py-2 bg-[#06080F] border border-slate-800 rounded-lg text-xs text-white placeholder-slate-600 focus:outline-none focus:border-sky-500 transition"
+                className="w-full pl-10 pr-3.5 py-2.5 bg-[#06080F] border border-slate-800 rounded-xl text-sm text-white placeholder-slate-600 focus:outline-none focus:border-sky-500 transition"
               />
             </div>
           </div>
@@ -197,11 +197,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-2 py-2.5 px-4 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white text-xs font-semibold rounded-lg shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2 touch-manipulation active:scale-98"
+            className="w-full mt-2 py-3 px-4 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white text-sm font-semibold rounded-xl shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2 touch-manipulation active:scale-98"
           >
             {loading ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="w-4.5 h-4.5 animate-spin" />
                 <span>{mode === "login" ? "Logging in..." : "Creating account..."}</span>
               </>
             ) : (
@@ -213,7 +213,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="text-[11px] text-slate-500 hover:text-slate-400 transition"
+              className="text-xs text-slate-400 hover:text-slate-300 transition"
             >
               Continue in Local Mode (offline storage)
             </button>

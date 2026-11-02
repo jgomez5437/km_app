@@ -50,8 +50,7 @@ Instructions:
 
     // 1. Google Gemini Provider
     if (provider === "gemini") {
-      const selectedModel = model?.trim() || "gemini-1.5-flash";
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${cleanKey}`;
+      let targetModel = model?.trim() || "gemini-2.5-flash";
 
       // Format messages for Gemini (roles: 'user' | 'model')
       const contents = messages
@@ -77,22 +76,73 @@ Instructions:
         },
       };
 
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(geminiPayload),
-      });
+      const tryGenerate = async (mName: string) => {
+        const cleanModel = mName.replace(/^models\//, "");
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${cleanModel}:generateContent?key=${cleanKey}`;
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(geminiPayload),
+        });
+        const data = await res.json();
+        return { res, data, cleanModel };
+      };
 
-      const data = await res.json();
+      let attempt = await tryGenerate(targetModel);
 
-      if (!res.ok) {
-        const errorMsg =
-          data?.error?.message ||
-          `Gemini API returned status ${res.status} (${res.statusText})`;
-        return NextResponse.json({ error: errorMsg }, { status: res.status });
+      // If model not found (404), auto-detect available models via ModelService.ListModels
+      if (!attempt.res.ok && (attempt.res.status === 404 || attempt.data?.error?.message?.includes("not found"))) {
+        console.warn(`Gemini model ${targetModel} not found. Querying available models from Gemini API...`);
+        try {
+          const listRes = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models?key=${cleanKey}`
+          );
+          if (listRes.ok) {
+            const listData = await listRes.json();
+            const availableModels: string[] = (listData.models || [])
+              .filter((m: any) => m.supportedGenerationMethods?.includes("generateContent"))
+              .map((m: any) => m.name.replace(/^models\//, ""));
+
+            // Preferred priority order
+            const priorityList = [
+              "gemini-2.5-flash",
+              "gemini-2.0-flash",
+              "gemini-2.5-pro",
+              "gemini-2.0-flash-exp",
+              "gemini-flash-latest",
+            ];
+
+            const bestModel =
+              priorityList.find((p) => availableModels.includes(p)) ||
+              availableModels.find((name) => name.includes("gemini") && name.includes("flash")) ||
+              availableModels.find((name) => name.includes("gemini")) ||
+              availableModels[0];
+
+            if (bestModel) {
+              console.log(`Auto-discovered active Gemini model: ${bestModel}`);
+              attempt = await tryGenerate(bestModel);
+              targetModel = bestModel;
+            }
+          }
+        } catch (listErr) {
+          console.warn("ModelService list query failed, trying standard fallback:", listErr);
+        }
+
+        // If still not ok, try 2.0-flash fallback
+        if (!attempt.res.ok && targetModel !== "gemini-2.0-flash") {
+          attempt = await tryGenerate("gemini-2.0-flash");
+          if (attempt.res.ok) targetModel = "gemini-2.0-flash";
+        }
       }
 
-      const candidate = data.candidates?.[0];
+      if (!attempt.res.ok) {
+        const errorMsg =
+          attempt.data?.error?.message ||
+          `Gemini API returned status ${attempt.res.status} (${attempt.res.statusText})`;
+        return NextResponse.json({ error: errorMsg }, { status: attempt.res.status });
+      }
+
+      const candidate = attempt.data.candidates?.[0];
       const reply = candidate?.content?.parts?.[0]?.text;
 
       if (!reply) {
@@ -102,7 +152,7 @@ Instructions:
         );
       }
 
-      return NextResponse.json({ text: reply });
+      return NextResponse.json({ text: reply, modelUsed: targetModel });
     }
 
     // 2. OpenAI Provider (default)
@@ -147,7 +197,7 @@ Instructions:
       );
     }
 
-    return NextResponse.json({ text: reply });
+    return NextResponse.json({ text: reply, modelUsed: selectedModel });
   } catch (err: any) {
     console.error("AI chat error:", err);
     return NextResponse.json(

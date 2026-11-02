@@ -55,6 +55,7 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
   const [openaiKey, setOpenaiKey] = useState("");
   const [geminiKey, setGeminiKey] = useState("");
   const [model, setModel] = useState("");
+  const [activeModelUsed, setActiveModelUsed] = useState<string>("");
   const [showKey, setShowKey] = useState(false);
   const [savedFeedback, setSavedFeedback] = useState(false);
 
@@ -88,7 +89,15 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
           if (parsed.provider === "gemini") setGeminiKey(parsed.apiKey);
           else setOpenaiKey(parsed.apiKey);
         }
-        if (parsed.model) setModel(parsed.model);
+        // Auto-upgrade legacy gemini-1.5-flash
+        if (parsed.model === "gemini-1.5-flash" || !parsed.model) {
+          setModel(parsed.provider === "gemini" ? "gemini-2.5-flash" : "");
+        } else {
+          setModel(parsed.model);
+        }
+      } else {
+        // Default to modern Gemini 2.5 Flash
+        setModel("gemini-2.5-flash");
       }
     } catch (e) {
       console.warn("Failed to load AI settings:", e);
@@ -298,6 +307,10 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
         throw new Error(data.error || "Failed to reach AI provider.");
       }
 
+      if (data.modelUsed) {
+        setActiveModelUsed(data.modelUsed);
+      }
+
       setMessages((prev) => [
         ...prev,
         {
@@ -474,7 +487,13 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
             {messages.length > 0 && (
               <div className="flex items-center justify-between pb-1.5 px-1">
                 <span className="text-[10px] text-slate-500">
-                  Model: {provider === "gemini" ? "Gemini 1.5 Flash" : provider === "openai" ? "GPT-4o-mini" : "Ollama"}
+                  Model: {
+                    provider === "gemini"
+                      ? (activeModelUsed?.includes("2.5-pro") ? "Gemini 2.5 Pro" : activeModelUsed?.includes("2.0") ? "Gemini 2.0 Flash" : "Gemini 2.5 Flash")
+                      : provider === "openai"
+                      ? (activeModelUsed?.includes("gpt-4o") && !activeModelUsed?.includes("mini") ? "GPT-4o" : activeModelUsed?.includes("o3") ? "o3-mini" : "GPT-4o mini")
+                      : (model || "Ollama")
+                  }
                 </span>
                 <button
                   onClick={() => setMessages([])}
@@ -589,12 +608,14 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
               onChange={(e) => {
                 const nextProvider = e.target.value as any;
                 setProvider(nextProvider);
-                saveSettings({ provider: nextProvider });
+                const defaultNextModel = nextProvider === "gemini" ? "gemini-2.5-flash" : nextProvider === "openai" ? "gpt-4o-mini" : "";
+                setModel(defaultNextModel);
+                saveSettings({ provider: nextProvider, model: defaultNextModel });
               }}
               className="w-full bg-[#06080F] border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500 transition"
             >
+              <option value="gemini">Google Gemini (Gemini 2.5 Flash / Pro)</option>
               <option value="openai">OpenAI (GPT-4o / GPT-4o-mini)</option>
-              <option value="gemini">Google Gemini (Gemini 1.5 Flash / Pro)</option>
               <option value="local-ollama">Ollama (100% Local & Private)</option>
             </select>
           </div>
@@ -628,7 +649,7 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
                   onChange={(e) => setModel(e.target.value)}
                   onBlur={() => saveSettings()}
                   placeholder="llama3, mistral, deepseek-r1"
-                  className="w-full bg-[#06080F] border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500 transition"
+                  className="w-full bg-[#06080F] border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500 transition font-mono"
                 />
               </div>
             </div>
@@ -692,16 +713,72 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
 
               <div>
                 <label className="block text-[11px] font-semibold text-slate-400 mb-1">
-                  Model Override (Optional)
+                  Model
                 </label>
-                <input
-                  type="text"
-                  value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  onBlur={() => saveSettings()}
-                  placeholder={provider === "gemini" ? "gemini-1.5-flash (default)" : "gpt-4o-mini (default)"}
-                  className="w-full bg-[#06080F] border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500 transition"
-                />
+                {provider === "gemini" ? (
+                  <select
+                    value={
+                      ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"].includes(model || "gemini-2.5-flash")
+                        ? model || "gemini-2.5-flash"
+                        : "custom"
+                    }
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "custom") {
+                        setModel("");
+                        saveSettings({ model: "" });
+                      } else {
+                        setModel(val);
+                        saveSettings({ model: val });
+                      }
+                    }}
+                    className="w-full bg-[#06080F] border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500 transition"
+                  >
+                    <option value="gemini-2.5-flash">Gemini 2.5 Flash (Recommended: Fast & Intelligent)</option>
+                    <option value="gemini-2.5-pro">Gemini 2.5 Pro (Deep Reasoning & Analysis)</option>
+                    <option value="gemini-2.0-flash">Gemini 2.0 Flash (Fast Multimodal)</option>
+                    <option value="custom">Custom Model Identifier...</option>
+                  </select>
+                ) : (
+                  <select
+                    value={
+                      ["gpt-4o-mini", "gpt-4o", "o3-mini"].includes(model || "gpt-4o-mini")
+                        ? model || "gpt-4o-mini"
+                        : "custom"
+                    }
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "custom") {
+                        setModel("");
+                        saveSettings({ model: "" });
+                      } else {
+                        setModel(val);
+                        saveSettings({ model: val });
+                      }
+                    }}
+                    className="w-full bg-[#06080F] border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500 transition"
+                  >
+                    <option value="gpt-4o-mini">GPT-4o mini (Recommended: Fast & Efficient)</option>
+                    <option value="gpt-4o">GPT-4o (Flagship Omni)</option>
+                    <option value="o3-mini">o3-mini (Advanced Reasoning)</option>
+                    <option value="custom">Custom Model Identifier...</option>
+                  </select>
+                )}
+
+                {/* Show custom text input if custom selected */}
+                {(!["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash", "gpt-4o-mini", "gpt-4o", "o3-mini"].includes(model)) && (
+                  <input
+                    type="text"
+                    value={model}
+                    onChange={(e) => {
+                      setModel(e.target.value);
+                      saveSettings({ model: e.target.value });
+                    }}
+                    onBlur={() => saveSettings()}
+                    placeholder={provider === "gemini" ? "e.g. gemini-2.5-flash" : "e.g. gpt-4o-mini"}
+                    className="w-full mt-2 bg-[#06080F] border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500 transition font-mono"
+                  />
+                )}
               </div>
             </div>
           )}

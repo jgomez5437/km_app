@@ -64,7 +64,7 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
         },
       }),
       Markdown.configure({
-        html: true,
+        html: false,
         tightLists: true,
         bulletListMarker: "-",
         linkify: true,
@@ -80,7 +80,10 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
       },
     },
     onUpdate: ({ editor }) => {
-      const md = (editor.storage as any).markdown?.getMarkdown();
+      const storage = editor.storage as unknown as {
+        markdown?: { getMarkdown: () => string };
+      };
+      const md = storage.markdown?.getMarkdown();
       onUpdateContent(md || editor.getHTML());
     },
   });
@@ -88,8 +91,10 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
   // Sync editor content if note switches
   useEffect(() => {
     if (editor) {
-      const current =
-        (editor.storage as any).markdown?.getMarkdown() ?? editor.getHTML();
+      const storage = editor.storage as unknown as {
+        markdown?: { getMarkdown: () => string };
+      };
+      const current = storage.markdown?.getMarkdown() ?? editor.getHTML();
       if (current !== initialContent) {
         editor.commands.setContent(initialContent, { emitUpdate: false });
       }
@@ -107,7 +112,6 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
   // Calculate statistics
   const text = editor.getText();
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
-  const charCount = text.length;
   const readingTime = Math.ceil(wordCount / 200);
 
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Note, Folder, AuthUser } from "@/types/vault";
 import {
   loadNotes,
@@ -10,8 +10,8 @@ import {
   loadFolders,
   saveFolders,
   createFolder,
-  INITIAL_SAMPLE_NOTES,
-  INITIAL_SAMPLE_FOLDERS,
+  recordDeletedNotes,
+  recordDeletedFolders,
   syncWithCloud,
   scheduleDebouncedSync,
 } from "@/lib/storage";
@@ -37,14 +37,18 @@ import {
   X,
   LogOut,
   LogIn,
-  User as UserIcon,
 } from "lucide-react";
 
 export const NexusWorkbench: React.FC = () => {
-  const [folders, setFolders] = useState<Folder[]>(INITIAL_SAMPLE_FOLDERS);
-  const [notes, setNotes] = useState<Note[]>(INITIAL_SAMPLE_NOTES);
-  const [activeNoteId, setActiveNoteId] = useState<string>("welcome-to-astro");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [folders, setFolders] = useState<Folder[]>(() => loadFolders());
+  const [notes, setNotes] = useState<Note[]>(() => loadNotes());
+  const [activeNoteId, setActiveNoteId] = useState<string>(() => {
+    const initial = loadNotes();
+    return initial[0]?.id || "welcome-to-astro";
+  });
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth >= 768 : false
+  );
   const [isRightDrawerOpen, setIsRightDrawerOpen] = useState(false);
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -61,25 +65,11 @@ export const NexusWorkbench: React.FC = () => {
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
 
-  // Responsive default layout: open sidebar on desktop, closed on mobile
+  // Check auth session and sync with cloud on mount
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      setIsSidebarOpen(window.innerWidth >= 768);
-    }
-  }, []);
+    const initialFolders = loadFolders();
+    const initialNotes = loadNotes();
 
-  // Load from local storage and check auth session
-  useEffect(() => {
-    const loadedFolders = loadFolders();
-    setFolders(loadedFolders);
-
-    const loadedNotes = loadNotes();
-    setNotes(loadedNotes);
-    if (loadedNotes.length > 0 && !loadedNotes.some((n) => n.id === activeNoteId)) {
-      setActiveNoteId(loadedNotes[0].id);
-    }
-
-    // Check if user is logged in
     fetch("/api/auth/me")
       .then((res) => res.json())
       .then((data) => {
@@ -87,7 +77,7 @@ export const NexusWorkbench: React.FC = () => {
           setCurrentUser(data.user);
           setIsCloudConfigured(true);
           setSyncStatus("syncing");
-          syncWithCloud(loadedNotes, loadedFolders).then((res) => {
+          syncWithCloud(initialNotes, initialFolders).then((res) => {
             if (res.isCloud) {
               setNotes(res.notes);
               setFolders(res.folders);
@@ -106,22 +96,6 @@ export const NexusWorkbench: React.FC = () => {
       });
   }, []);
 
-  // Global Ctrl+K / Ctrl+N shortcut listener
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setIsPaletteOpen((prev) => !prev);
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "n") {
-        e.preventDefault();
-        handleCreateNewNote();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [notes]);
-
   const activeNote = notes.find((n) => n.id === activeNoteId) || notes[0];
 
   // Direct subpages of active note
@@ -130,7 +104,7 @@ export const NexusWorkbench: React.FC = () => {
     return notes.filter((n) => n.parentId === activeNote.id);
   }, [activeNote, notes]);
 
-  // Breadcrumb path computation
+  // Breadcrumb path computation (supports multi-level nested subpages)
   const breadcrumbs = React.useMemo(() => {
     if (!activeNote) return [];
     const trail: { id?: string; label: string; type: "folder" | "note" }[] = [];
@@ -141,30 +115,42 @@ export const NexusWorkbench: React.FC = () => {
       if (folder) trail.push({ id: folder.id, label: folder.name, type: "folder" });
     }
 
-    // Check Parent Note
-    if (activeNote.parentId) {
-      const parent = notes.find((n) => n.id === activeNote.parentId);
-      if (parent) trail.push({ id: parent.id, label: parent.title, type: "note" });
+    // Walk up ancestor notes chain with cycle protection
+    const ancestors: { id: string; label: string; type: "note" }[] = [];
+    const visited = new Set<string>([activeNote.id]);
+    let currentParentId = activeNote.parentId;
+    while (currentParentId && !visited.has(currentParentId)) {
+      visited.add(currentParentId);
+      const parent = notes.find((n) => n.id === currentParentId);
+      if (!parent) break;
+      ancestors.unshift({ id: parent.id, label: parent.title, type: "note" });
+      currentParentId = parent.parentId;
     }
 
+    trail.push(...ancestors);
     return trail;
   }, [activeNote, folders, notes]);
 
-  const triggerSync = (currentNotes: Note[], currentFolders?: Folder[]) => {
-    setSyncStatus("syncing");
-    scheduleDebouncedSync(
-      currentNotes,
-      currentFolders || folders,
-      (syncedNotes, syncedFolders, isCloud) => {
-        setIsCloudConfigured(isCloud);
-        if (isCloud) {
-          if (syncedNotes.length > 0) setNotes(syncedNotes);
-          if (syncedFolders.length > 0) setFolders(syncedFolders);
+  const triggerSync = useCallback(
+    (currentNotes: Note[], currentFolders?: Folder[]) => {
+      setSyncStatus("syncing");
+      scheduleDebouncedSync(
+        currentNotes,
+        currentFolders ?? folders,
+        (syncedNotes, syncedFolders, isCloud) => {
+          setIsCloudConfigured(isCloud);
+          if (isCloud) {
+            if (syncedNotes.length > 0) {
+              setNotes(syncedNotes);
+            }
+            setFolders(syncedFolders);
+          }
+          setSyncStatus(isCloud ? "synced" : "offline");
         }
-        setSyncStatus(isCloud ? "synced" : "offline");
-      }
-    );
-  };
+      );
+    },
+    [folders]
+  );
 
   const handleManualSync = async () => {
     if (!currentUser) {
@@ -172,7 +158,7 @@ export const NexusWorkbench: React.FC = () => {
       return;
     }
     setSyncStatus("syncing");
-    const res = await syncWithCloud(notes, folders);
+    const res = await syncWithCloud(notes, folders, { pullOnly: false });
     setIsCloudConfigured(res.isCloud);
     if (res.isCloud) {
       setNotes(res.notes);
@@ -210,37 +196,52 @@ export const NexusWorkbench: React.FC = () => {
     }
   };
 
-  const handleCreateNewNote = (
-    title?: string,
-    folderId?: string,
-    parentId?: string
-  ) => {
-    const newNote = createNewNote(title || "Untitled Note", folderId, parentId);
-    const updated = [newNote, ...notes];
-    setNotes(updated);
-    saveNotes(updated);
-    setActiveNoteId(newNote.id);
+  const handleCreateNewNote = useCallback(
+    (title?: string, folderId?: string, parentId?: string) => {
+      const newNote = createNewNote(title || "Untitled Note", folderId, parentId);
+      const updated = [newNote, ...notes];
+      setNotes(updated);
+      saveNotes(updated);
+      setActiveNoteId(newNote.id);
 
-    // If subpage, ensure parent note is expanded in sidebar
-    if (parentId) {
-      setCollapsedNotes((prev) => {
-        const next = new Set(prev);
-        next.delete(parentId);
-        return next;
-      });
-    }
+      // If subpage, ensure parent note is expanded in sidebar
+      if (parentId) {
+        setCollapsedNotes((prev) => {
+          const next = new Set(prev);
+          next.delete(parentId);
+          return next;
+        });
+      }
 
-    // If in folder, ensure folder is expanded
-    if (folderId) {
-      setCollapsedFolders((prev) => {
-        const next = new Set(prev);
-        next.delete(folderId);
-        return next;
-      });
-    }
+      // If in folder, ensure folder is expanded
+      if (folderId) {
+        setCollapsedFolders((prev) => {
+          const next = new Set(prev);
+          next.delete(folderId);
+          return next;
+        });
+      }
 
-    triggerSync(updated);
-  };
+      triggerSync(updated, folders);
+    },
+    [notes, folders, triggerSync]
+  );
+
+  // Global Ctrl+K / Ctrl+N shortcut listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setIsPaletteOpen((prev) => !prev);
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "n") {
+        e.preventDefault();
+        handleCreateNewNote();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleCreateNewNote]);
 
   const handleCreateSubpage = (parentNoteId: string, folderId?: string) => {
     handleCreateNewNote("Untitled Subpage", folderId, parentNoteId);
@@ -266,10 +267,14 @@ export const NexusWorkbench: React.FC = () => {
       const remainingFolders = folders.filter((f) => f.id !== folderId);
       setFolders(remainingFolders);
       saveFolders(remainingFolders);
+      recordDeletedFolders([folderId]);
 
-      // Unfile notes that were in this folder
+      // Unfile notes that were in this folder and bump updatedAt so cloud sync saves the change
+      const now = Date.now();
       const updatedNotes = notes.map((n) =>
-        n.folderId === folderId ? { ...n, folderId: undefined } : n
+        n.folderId === folderId
+          ? { ...n, folderId: undefined, updatedAt: now }
+          : n
       );
       setNotes(updatedNotes);
       saveNotes(updatedNotes);
@@ -297,14 +302,17 @@ export const NexusWorkbench: React.FC = () => {
         });
       }
 
+      const deletedList = Array.from(idsToDelete);
+      recordDeletedNotes(deletedList);
+
       const remaining = notes.filter((n) => !idsToDelete.has(n.id));
       setNotes(remaining);
       saveNotes(remaining);
       if (idsToDelete.has(activeNoteId)) {
         setActiveNoteId(remaining[0].id);
       }
-      triggerSync(remaining);
-      idsToDelete.forEach((delId) => {
+      triggerSync(remaining, folders);
+      deletedList.forEach((delId) => {
         fetch(`/api/notes/${delId}`, { method: "DELETE" }).catch(() => {});
       });
     }
@@ -314,14 +322,22 @@ export const NexusWorkbench: React.FC = () => {
     if (!activeNote) return;
     const updated = updateNoteInVault({ id: activeNote.id, title: newTitle }, notes);
     setNotes(updated);
-    triggerSync(updated);
+    triggerSync(updated, folders);
   };
 
   const handleUpdateContent = (newContent: string) => {
     if (!activeNote) return;
     const updated = updateNoteInVault({ id: activeNote.id, content: newContent }, notes);
     setNotes(updated);
-    triggerSync(updated);
+    triggerSync(updated, folders);
+  };
+
+  const handleInsertWikilink = (targetTitle: string) => {
+    if (!activeNote) return;
+    const wikilink = `[[${targetTitle}]]`;
+    if (activeNote.content.includes(wikilink)) return;
+    const nextContent = `${activeNote.content.trimEnd()}\n\n${wikilink}`;
+    handleUpdateContent(nextContent);
   };
 
   const toggleFolderCollapse = (folderId: string) => {
@@ -436,6 +452,16 @@ export const NexusWorkbench: React.FC = () => {
     n.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Valid folder and note ID sets so notes with orphaned folderId/parentId never disappear from UI
+  const validFolderIds = React.useMemo(
+    () => new Set(folders.map((f) => f.id)),
+    [folders]
+  );
+  const validNoteIds = React.useMemo(
+    () => new Set(notes.map((n) => n.id)),
+    [notes]
+  );
+
   return (
     <div className="flex h-screen w-screen bg-[#06080F] text-slate-100 overflow-hidden font-sans relative">
       {/* 1. Mobile Backdrop for Sidebar Drawer */}
@@ -545,9 +571,11 @@ export const NexusWorkbench: React.FC = () => {
               {/* 1. Folders Section */}
               {folders.map((folder) => {
                 const isCollapsed = collapsedFolders.has(folder.id);
-                // Top-level notes directly inside this folder
+                // Top-level notes directly inside this folder (including subpages whose parent no longer exists)
                 const folderNotes = notes.filter(
-                  (n) => n.folderId === folder.id && !n.parentId
+                  (n) =>
+                    n.folderId === folder.id &&
+                    (!n.parentId || !validNoteIds.has(n.parentId))
                 );
 
                 return (
@@ -619,7 +647,7 @@ export const NexusWorkbench: React.FC = () => {
                 );
               })}
 
-              {/* 2. Unfiled Root Notes */}
+              {/* 2. Unfiled Root Notes (including any note whose folderId/parentId no longer exists) */}
               <div className="pt-2">
                 <div className="px-2 py-1 flex items-center justify-between text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                   <span>Notes</span>
@@ -632,7 +660,11 @@ export const NexusWorkbench: React.FC = () => {
                   </button>
                 </div>
                 {notes
-                  .filter((n) => !n.folderId && !n.parentId)
+                  .filter(
+                    (n) =>
+                      (!n.folderId || !validFolderIds.has(n.folderId)) &&
+                      (!n.parentId || !validNoteIds.has(n.parentId))
+                  )
                   .map((note) => renderNoteTreeItem(note, 0))}
               </div>
             </>
@@ -840,6 +872,7 @@ export const NexusWorkbench: React.FC = () => {
                 </div>
                 <div className="flex-1 overflow-hidden">
                   <NexusAIAssistant
+                    key={currentUser?.id || "local"}
                     activeNote={activeNote}
                     allNotes={notes}
                     folders={folders}
@@ -850,7 +883,7 @@ export const NexusWorkbench: React.FC = () => {
                         setIsRightDrawerOpen(false);
                       }
                     }}
-                    onInsertWikilink={() => {}}
+                    onInsertWikilink={handleInsertWikilink}
                   />
                 </div>
               </aside>

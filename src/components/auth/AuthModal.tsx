@@ -8,10 +8,7 @@ import {
   Mail,
   User as UserIcon,
   Loader2,
-  CheckCircle2,
   AlertCircle,
-  Cloud,
-  Sparkles,
 } from "lucide-react";
 
 interface AuthModalProps {
@@ -64,8 +61,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         onSuccess(data.user);
         onClose();
       }
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.");
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "An unexpected error occurred."
+      );
     } finally {
       setLoading(false);
     }

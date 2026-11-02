@@ -3,7 +3,14 @@ import { cookies } from "next/headers";
 
 export const SESSION_COOKIE_NAME = "nexus_session";
 
-const JWT_SECRET = process.env.AUTH_SECRET || "nexus_vault_default_secret_key_32chars_long_minimum";
+if (!process.env.AUTH_SECRET && process.env.NODE_ENV === "production") {
+  console.warn(
+    "WARNING: AUTH_SECRET environment variable is not set in production. Set a strong 32+ character secret."
+  );
+}
+
+const JWT_SECRET =
+  process.env.AUTH_SECRET || "nexus_vault_default_secret_key_32chars_long_minimum";
 const key = new TextEncoder().encode(JWT_SECRET);
 
 export interface AuthSessionPayload {
@@ -36,7 +43,7 @@ export async function verifySessionToken(token: string): Promise<AuthSessionPayl
       email: payload.email as string,
       name: payload.name as string | undefined,
     };
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -50,7 +57,7 @@ export async function getSessionUser(): Promise<AuthSessionPayload | null> {
     const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
     if (!token) return null;
     return await verifySessionToken(token);
-  } catch (error) {
+  } catch {
     return null;
   }
 }

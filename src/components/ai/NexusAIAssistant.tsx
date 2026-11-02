@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Note, Folder, AuthUser } from "@/types/vault";
+import { escapeRegExp } from "@/lib/markdown";
 import {
   Sparkles,
   Link as LinkIcon,
@@ -31,10 +32,68 @@ interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
-  timestamp: number;
 }
 
 const STORAGE_KEY_BASE = "astro_ai_settings_";
+let chatMessageCounter = 0;
+
+function createChatMessage(
+  role: "user" | "assistant",
+  content: string
+): ChatMessage {
+  chatMessageCounter += 1;
+  return {
+    id: `msg_${chatMessageCounter}_${role[0]}`,
+    role,
+    content,
+  };
+}
+
+interface StoredAISettings {
+  provider: "openai" | "gemini" | "local-ollama";
+  endpoint: string;
+  openaiKey: string;
+  geminiKey: string;
+  model: string;
+}
+
+function loadInitialAISettings(storageKey: string): StoredAISettings {
+  const defaults: StoredAISettings = {
+    provider: "openai",
+    endpoint: "http://localhost:11434",
+    openaiKey: "",
+    geminiKey: "",
+    model: "gemini-2.5-flash",
+  };
+  if (typeof window === "undefined") return defaults;
+  try {
+    const raw =
+      localStorage.getItem(storageKey) ||
+      localStorage.getItem("astro_ai_settings_v1") ||
+      localStorage.getItem("astro_ai_settings_local");
+    if (!raw) return defaults;
+    const parsed = JSON.parse(raw);
+    const provider: "openai" | "gemini" | "local-ollama" =
+      parsed.provider || "openai";
+    const endpoint: string = parsed.endpoint || "http://localhost:11434";
+    let openaiKey: string = parsed.openaiKey || "";
+    let geminiKey: string = parsed.geminiKey || "";
+    if (parsed.apiKey) {
+      if (provider === "gemini") geminiKey = parsed.apiKey;
+      else openaiKey = parsed.apiKey;
+    }
+    const model: string =
+      parsed.model === "gemini-1.5-flash" || !parsed.model
+        ? provider === "gemini"
+          ? "gemini-2.5-flash"
+          : ""
+        : parsed.model;
+    return { provider, endpoint, openaiKey, geminiKey, model };
+  } catch (e) {
+    console.warn("Failed to load AI settings:", e);
+    return defaults;
+  }
+}
 
 export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
   activeNote,
@@ -49,12 +108,24 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
 
+  // Storage key scoped to user or guest
+  const storageKey = useMemo(() => {
+    return `${STORAGE_KEY_BASE}${currentUser?.id || "local"}`;
+  }, [currentUser]);
+
+  const initialSettings = useMemo(
+    () => loadInitialAISettings(storageKey),
+    [storageKey]
+  );
+
   // Settings State
-  const [provider, setProvider] = useState<"openai" | "gemini" | "local-ollama">("openai");
-  const [endpoint, setEndpoint] = useState("http://localhost:11434");
-  const [openaiKey, setOpenaiKey] = useState("");
-  const [geminiKey, setGeminiKey] = useState("");
-  const [model, setModel] = useState("");
+  const [provider, setProvider] = useState<"openai" | "gemini" | "local-ollama">(
+    () => initialSettings.provider
+  );
+  const [endpoint, setEndpoint] = useState(() => initialSettings.endpoint);
+  const [openaiKey, setOpenaiKey] = useState(() => initialSettings.openaiKey);
+  const [geminiKey, setGeminiKey] = useState(() => initialSettings.geminiKey);
+  const [model, setModel] = useState(() => initialSettings.model);
   const [activeModelUsed, setActiveModelUsed] = useState<string>("");
   const [showKey, setShowKey] = useState(false);
   const [savedFeedback, setSavedFeedback] = useState(false);
@@ -62,47 +133,6 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
   // Conversation history
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-
-  // Storage key scoped to user or guest
-  const storageKey = useMemo(() => {
-    return `${STORAGE_KEY_BASE}${currentUser?.id || "local"}`;
-  }, [currentUser]);
-
-  // Load persistent AI settings on mount or user switch
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      // Check user-scoped storage, fallback to global
-      const raw =
-        localStorage.getItem(storageKey) ||
-        localStorage.getItem("astro_ai_settings_v1") ||
-        localStorage.getItem("astro_ai_settings_local");
-
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed.provider) setProvider(parsed.provider);
-        if (parsed.endpoint) setEndpoint(parsed.endpoint);
-        if (parsed.openaiKey) setOpenaiKey(parsed.openaiKey);
-        if (parsed.geminiKey) setGeminiKey(parsed.geminiKey);
-        // Fallback for legacy single apiKey
-        if (parsed.apiKey) {
-          if (parsed.provider === "gemini") setGeminiKey(parsed.apiKey);
-          else setOpenaiKey(parsed.apiKey);
-        }
-        // Auto-upgrade legacy gemini-1.5-flash
-        if (parsed.model === "gemini-1.5-flash" || !parsed.model) {
-          setModel(parsed.provider === "gemini" ? "gemini-2.5-flash" : "");
-        } else {
-          setModel(parsed.model);
-        }
-      } else {
-        // Default to modern Gemini 2.5 Flash
-        setModel("gemini-2.5-flash");
-      }
-    } catch (e) {
-      console.warn("Failed to load AI settings:", e);
-    }
-  }, [storageKey]);
 
   // Save settings helper
   const saveSettings = (override?: {
@@ -159,13 +189,19 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
       }
 
       // Check if candidate title appears in active note text
-      const candidateTitleRegex = new RegExp(`\\b${candidate.title}\\b`, "i");
-      if (candidateTitleRegex.test(activeNote.content)) {
-        suggestions.push({
-          note: candidate,
-          reason: `Mentioned in this note's body.`,
-        });
-        return;
+      const escapedCandidateTitle = escapeRegExp(candidate.title);
+      if (escapedCandidateTitle) {
+        const candidateTitleRegex = new RegExp(
+          `(?:^|\\W)${escapedCandidateTitle}(?:$|\\W)`,
+          "i"
+        );
+        if (candidateTitleRegex.test(activeNote.content)) {
+          suggestions.push({
+            note: candidate,
+            reason: `Mentioned in this note's body.`,
+          });
+          return;
+        }
       }
 
       // Check shared tags
@@ -212,31 +248,19 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
 
     // Check if key is required and missing
     if (provider !== "local-ollama" && !activeKey.trim()) {
-      const userMsg: ChatMessage = {
-        id: `msg_${Date.now()}_u`,
-        role: "user",
-        content: prompt,
-        timestamp: Date.now(),
-      };
-      const assistantMsg: ChatMessage = {
-        id: `msg_${Date.now()}_a`,
-        role: "assistant",
-        content: `⚠️ **API Key Required**: Please configure your ${
+      const userMsg = createChatMessage("user", prompt);
+      const assistantMsg = createChatMessage(
+        "assistant",
+        `⚠️ **API Key Required**: Please configure your ${
           provider === "gemini" ? "Google Gemini" : "OpenAI"
-        } API key in the **Settings** tab (⚙️) above to unlock real vault intelligence and chat.`,
-        timestamp: Date.now() + 1,
-      };
+        } API key in the **Settings** tab (⚙️) above to unlock real vault intelligence and chat.`
+      );
       setMessages((prev) => [...prev, userMsg, assistantMsg]);
       setQuery("");
       return;
     }
 
-    const userMessage: ChatMessage = {
-      id: `msg_${Date.now()}_u`,
-      role: "user",
-      content: prompt,
-      timestamp: Date.now(),
-    };
+    const userMessage = createChatMessage("user", prompt);
 
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
@@ -276,15 +300,7 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
         const data = await res.json();
         const reply = data.message?.content || "No response received from local Ollama.";
 
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `msg_${Date.now()}_a`,
-            role: "assistant",
-            content: reply,
-            timestamp: Date.now(),
-          },
-        ]);
+        setMessages((prev) => [...prev, createChatMessage("assistant", reply)]);
         return;
       }
 
@@ -313,23 +329,17 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
 
       setMessages((prev) => [
         ...prev,
-        {
-          id: `msg_${Date.now()}_a`,
-          role: "assistant",
-          content: data.text,
-          timestamp: Date.now(),
-        },
+        createChatMessage("assistant", data.text),
       ]);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("AI Query Error:", err);
+      const message =
+        err instanceof Error
+          ? err.message
+          : "An unexpected error occurred while communicating with the AI service.";
       setMessages((prev) => [
         ...prev,
-        {
-          id: `msg_${Date.now()}_err`,
-          role: "assistant",
-          content: `⚠️ **AI Query Error**: ${err.message || "An unexpected error occurred while communicating with the AI service."}`,
-          timestamp: Date.now(),
-        },
+        createChatMessage("assistant", `⚠️ **AI Query Error**: ${message}`),
       ]);
     } finally {
       setIsProcessing(false);
@@ -606,7 +616,10 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
             <select
               value={provider}
               onChange={(e) => {
-                const nextProvider = e.target.value as any;
+                const nextProvider = e.target.value as
+                  | "openai"
+                  | "gemini"
+                  | "local-ollama";
                 setProvider(nextProvider);
                 const defaultNextModel = nextProvider === "gemini" ? "gemini-2.5-flash" : nextProvider === "openai" ? "gpt-4o-mini" : "";
                 setModel(defaultNextModel);

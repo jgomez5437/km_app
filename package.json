@@ -20,17 +20,13 @@
     "@tiptap/react": "^3.32.2",
     "@tiptap/starter-kit": "^3.32.2",
     "bcryptjs": "^3.0.3",
-    "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.4",
     "jose": "^6.2.14",
     "lucide-react": "^1.65.0",
     "next": "16.4.3",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "tailwind-merge": "^3.7.0",
-    "tiptap-markdown": "^0.9.0",
-    "y-indexeddb": "^9.0.12",
-    "yjs": "^13.6.33"
+    "tiptap-markdown": "^0.9.0"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",

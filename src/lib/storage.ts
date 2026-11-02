@@ -19,7 +19,6 @@ export const INITIAL_SAMPLE_NOTES: Note[] = [
 ### Core Superpowers
 - **Folders & Subpages**: Organize your knowledge with clean, nested hierarchies.
 - **Local-First & Offline**: Notes are stored directly in your browser's local storage and synced with Neon PostgreSQL.
-- **Interactive Knowledge Graph**: Visualize your folders, notes, and subpages as an interconnected cosmic constellation.
 - **AI Intelligence Layer**: Vault-wide semantic retrieval and automated synthesis.
 
 ### Quick Navigation
@@ -37,9 +36,9 @@ export const INITIAL_SAMPLE_NOTES: Note[] = [
     parentId: "welcome-to-astro",
     content: `Here are 3 quick actions to take right now:
 
-1. **Create a Note**: Click the **+** button in the sidebar header or use the floating button.
+1. **Create a Note**: Click the **+** button in the sidebar or use the Command Palette.
 2. **Create a Subpage**: Click the **+** icon next to any note in the sidebar or at the bottom of this page.
-3. **Explore the Graph**: Switch to the **Graph View** tab in the top bar to inspect your visual mind map.`,
+3. **Command Palette**: Press **Cmd+K** or **Ctrl+K** to search and navigate instantly.`,
     tags: ["tips", "shortcuts"],
     createdAt: Date.now() - 86400000 * 2,
     updatedAt: Date.now() - 86400000 * 2,

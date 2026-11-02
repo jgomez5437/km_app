@@ -106,7 +106,6 @@ export async function POST(req: Request) {
         "Welcome to your personal Astro cloud vault!\n\n" +
         "### Key Capabilities:\n" +
         "- **Folders & Subpages**: Group your notes seamlessly with folders and subpage hierarchies.\n" +
-        "- **Interactive Knowledge Graph**: Visualize your vault connections in real time.\n" +
         "- **AI Copilot**: Ask questions and synthesize insights from your personal notes.\n" +
         "- **End-to-End Cloud Sync**: Your notes and folders are backed up securely to Neon Serverless PostgreSQL.\n",
       tags: ["welcome", "getting-started"],

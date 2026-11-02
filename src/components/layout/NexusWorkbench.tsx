@@ -16,15 +16,12 @@ import {
   scheduleDebouncedSync,
 } from "@/lib/storage";
 import { NexusEditor } from "@/components/editor/NexusEditor";
-import { NexusGraph } from "@/components/graph/NexusGraph";
 import { NexusAIAssistant } from "@/components/ai/NexusAIAssistant";
 import { CommandPalette } from "@/components/palette/CommandPalette";
 import { AuthModal } from "@/components/auth/AuthModal";
 import {
   FileText,
   Plus,
-  Share2,
-  Columns,
   Sparkles,
   Search,
   Trash2,
@@ -47,7 +44,6 @@ export const NexusWorkbench: React.FC = () => {
   const [folders, setFolders] = useState<Folder[]>(INITIAL_SAMPLE_FOLDERS);
   const [notes, setNotes] = useState<Note[]>(INITIAL_SAMPLE_NOTES);
   const [activeNoteId, setActiveNoteId] = useState<string>("welcome-to-astro");
-  const [viewMode, setViewMode] = useState<"editor" | "split" | "graph">("editor");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isRightDrawerOpen, setIsRightDrawerOpen] = useState(false);
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
@@ -65,16 +61,10 @@ export const NexusWorkbench: React.FC = () => {
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
 
-  // Responsive default layout: open sidebar & split on desktop, clean single-pane on mobile
+  // Responsive default layout: open sidebar on desktop, closed on mobile
   useEffect(() => {
     if (typeof window !== "undefined") {
-      if (window.innerWidth >= 768) {
-        setIsSidebarOpen(true);
-        setViewMode("split");
-      } else {
-        setIsSidebarOpen(false);
-        setViewMode("editor");
-      }
+      setIsSidebarOpen(window.innerWidth >= 768);
     }
   }, []);
 
@@ -249,13 +239,6 @@ export const NexusWorkbench: React.FC = () => {
       });
     }
 
-    if (viewMode === "graph") {
-      setViewMode(
-        typeof window !== "undefined" && window.innerWidth < 640
-          ? "editor"
-          : "split"
-      );
-    }
     triggerSync(updated);
   };
 
@@ -372,13 +355,6 @@ export const NexusWorkbench: React.FC = () => {
         <div
           onClick={() => {
             setActiveNoteId(note.id);
-            if (viewMode === "graph") {
-              setViewMode(
-                typeof window !== "undefined" && window.innerWidth < 640
-                  ? "editor"
-                  : "split"
-              );
-            }
             if (typeof window !== "undefined" && window.innerWidth < 768) {
               setIsSidebarOpen(false);
             }
@@ -755,46 +731,6 @@ export const NexusWorkbench: React.FC = () => {
             </div>
           </div>
 
-          {/* View Mode Switcher */}
-          <div className="flex items-center gap-1 bg-[#06080F] p-1 rounded-lg border border-slate-800/80 mr-2">
-            <button
-              onClick={() => setViewMode("editor")}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs transition ${
-                viewMode === "editor"
-                  ? "bg-sky-950/60 text-sky-200 border border-sky-800/50 font-medium shadow-sm"
-                  : "text-slate-400 hover:text-white"
-              }`}
-              title="Editor View"
-            >
-              <FileText className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Editor</span>
-            </button>
-            <button
-              onClick={() => setViewMode("split")}
-              className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded text-xs transition ${
-                viewMode === "split"
-                  ? "bg-sky-950/60 text-sky-200 border border-sky-800/50 font-medium shadow-sm"
-                  : "text-slate-400 hover:text-white"
-              }`}
-              title="Split View"
-            >
-              <Columns className="w-3.5 h-3.5" />
-              <span>Split</span>
-            </button>
-            <button
-              onClick={() => setViewMode("graph")}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs transition ${
-                viewMode === "graph"
-                  ? "bg-sky-950/60 text-sky-200 border border-sky-800/50 font-medium shadow-sm"
-                  : "text-slate-400 hover:text-white"
-              }`}
-              title="Constellation Graph View"
-            >
-              <Share2 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Graph</span>
-            </button>
-          </div>
-
           {/* Right Controls */}
           <div className="flex items-center gap-1 sm:gap-1.5">
             {/* Minimalist Cloud Sync Icon */}
@@ -860,13 +796,9 @@ export const NexusWorkbench: React.FC = () => {
         <div className="flex-1 flex overflow-hidden relative">
           {/* Main workspace panes */}
           <div className="flex-1 flex overflow-hidden">
-            {/* Left Pane (Editor) */}
-            {(viewMode === "editor" || viewMode === "split") && activeNote && (
-              <div
-                className={`h-full flex flex-col ${
-                  viewMode === "split" ? "w-1/2 border-r border-gray-800" : "w-full"
-                }`}
-              >
+            {/* Full-width Editor Canvas */}
+            {activeNote ? (
+              <div className="h-full w-full flex flex-col">
                 <NexusEditor
                   initialContent={activeNote.content}
                   noteTitle={activeNote.title}
@@ -879,30 +811,9 @@ export const NexusWorkbench: React.FC = () => {
                   onSelectNote={(id) => setActiveNoteId(id)}
                 />
               </div>
-            )}
-
-            {/* Right Pane (Hierarchical Graph) */}
-            {(viewMode === "graph" || viewMode === "split") && (
-              <div
-                className={`h-full flex flex-col ${
-                  viewMode === "split" ? "w-1/2" : "w-full"
-                }`}
-              >
-                <NexusGraph
-                  notes={notes}
-                  folders={folders}
-                  activeNoteId={activeNoteId}
-                  onSelectNote={(id) => {
-                    setActiveNoteId(id);
-                    if (viewMode === "graph") {
-                      setViewMode(
-                        typeof window !== "undefined" && window.innerWidth < 640
-                          ? "editor"
-                          : "split"
-                      );
-                    }
-                  }}
-                />
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center text-slate-500 text-sm">
+                <span>Select a note from the sidebar or create a new one to begin.</span>
               </div>
             )}
           </div>
@@ -953,18 +864,8 @@ export const NexusWorkbench: React.FC = () => {
         isOpen={isPaletteOpen}
         onClose={() => setIsPaletteOpen(false)}
         notes={notes}
-        onSelectNote={(id) => {
-          setActiveNoteId(id);
-          if (viewMode === "graph") {
-            setViewMode(
-              typeof window !== "undefined" && window.innerWidth < 640
-                ? "editor"
-                : "split"
-            );
-          }
-        }}
+        onSelectNote={(id) => setActiveNoteId(id)}
         onCreateNote={(title) => handleCreateNewNote(title)}
-        onOpenGraph={() => setViewMode("graph")}
       />
 
       {/* 7. Auth Modal */}

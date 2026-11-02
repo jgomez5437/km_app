@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Astro — Space-Grade Knowledge Base",
   description:
-    "Next-generation cosmic, local-first knowledge base with hybrid block-markdown editing, interactive constellation graph, and AI synthesis.",
+    "Next-generation cosmic, local-first knowledge base with hybrid block-markdown editing and AI synthesis.",
 };
 
 export default function RootLayout({

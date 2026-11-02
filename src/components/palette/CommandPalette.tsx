@@ -6,7 +6,6 @@ import {
   Search,
   FileText,
   Plus,
-  Share2,
   Sparkles,
   Command,
   ArrowRight,
@@ -18,7 +17,6 @@ interface CommandPaletteProps {
   notes: Note[];
   onSelectNote: (noteId: string) => void;
   onCreateNote: (title: string) => void;
-  onOpenGraph: () => void;
 }
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({
@@ -27,7 +25,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   notes,
   onSelectNote,
   onCreateNote,
-  onOpenGraph,
 }) => {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -111,22 +108,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition" />
             </button>
           )}
-
-          <button
-            onClick={() => {
-              onOpenGraph();
-              onClose();
-            }}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-slate-300 hover:bg-slate-800/70 transition"
-          >
-            <Share2 className="w-4 h-4 text-indigo-400" />
-            <div className="flex-1">
-              <span className="font-medium text-white">Open Knowledge Graph View</span>
-              <span className="text-slate-400 text-[11px] block">
-                Visualize all note connections and clusters
-              </span>
-            </div>
-          </button>
 
           {filteredNotes.length > 0 ? (
             filteredNotes.map((note) => (

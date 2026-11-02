@@ -67,7 +67,7 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
     editorProps: {
       attributes: {
         class:
-          "nexus-editor-content focus:outline-none min-h-[500px] text-gray-200 text-base sm:text-[17px] leading-relaxed",
+          "nexus-editor-content focus:outline-none min-h-[200px] sm:min-h-[380px] text-gray-200 text-base sm:text-[17px] leading-relaxed",
       },
     },
     onUpdate: ({ editor }) => {
@@ -106,9 +106,9 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
   const readingTime = Math.ceil(wordCount / 200);
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#06080F] text-slate-100 overflow-hidden">
+    <div className="flex-1 flex flex-col min-h-0 h-full w-full bg-[#06080F] text-slate-100 overflow-hidden relative">
       {/* 1. Main Editable Canvas (Title and Body now clean at the top) */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar">
+      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pb-24 md:pb-8">
         <div className="max-w-4xl mx-auto px-5 sm:px-10 py-7 sm:py-10">
           {/* Main Canonical Title Input */}
           <div className="mb-6 sm:mb-8">
@@ -126,128 +126,138 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
       </div>
 
       {/* 2. Formatting Toolbar Docked at the Bottom */}
-      <div className="px-4 sm:px-8 py-2.5 bg-[#0B0F19]/95 border-t border-slate-800/80 flex items-center justify-between gap-3 text-slate-300 backdrop-blur-md shrink-0">
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+      <div className="fixed bottom-0 inset-x-0 md:static shrink-0 z-20 px-3 sm:px-8 pt-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-[#0E1525]/95 backdrop-blur-md border-t border-slate-700/90 shadow-[0_-8px_24px_rgba(0,0,0,0.65)] flex items-center justify-between gap-3 text-slate-200">
+        <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar py-0.5">
           <button
+            type="button"
             onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
             className={`p-2.5 sm:p-2 rounded-lg hover:bg-slate-800 hover:text-white transition shrink-0 touch-manipulation ${
               editor.isActive("heading", { level: 1 })
-                ? "text-sky-300 bg-slate-800/90 shadow-xs"
-                : "text-slate-400"
+                ? "text-sky-300 bg-sky-950/80 border border-sky-700/60 shadow-xs"
+                : "text-slate-200"
             }`}
             title="Heading 1"
           >
-            <Heading1 className="w-4.5 h-4.5" />
+            <Heading1 className="w-5 h-5" />
           </button>
           <button
+            type="button"
             onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
             className={`p-2.5 sm:p-2 rounded-lg hover:bg-slate-800 hover:text-white transition shrink-0 touch-manipulation ${
               editor.isActive("heading", { level: 2 })
-                ? "text-sky-300 bg-slate-800/90 shadow-xs"
-                : "text-slate-400"
+                ? "text-sky-300 bg-sky-950/80 border border-sky-700/60 shadow-xs"
+                : "text-slate-200"
             }`}
             title="Heading 2"
           >
-            <Heading2 className="w-4.5 h-4.5" />
+            <Heading2 className="w-5 h-5" />
           </button>
           <button
+            type="button"
             onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
             className={`p-2.5 sm:p-2 rounded-lg hover:bg-slate-800 hover:text-white transition shrink-0 touch-manipulation ${
               editor.isActive("heading", { level: 3 })
-                ? "text-sky-300 bg-slate-800/90 shadow-xs"
-                : "text-slate-400"
+                ? "text-sky-300 bg-sky-950/80 border border-sky-700/60 shadow-xs"
+                : "text-slate-200"
             }`}
             title="Heading 3"
           >
-            <Heading3 className="w-4.5 h-4.5" />
+            <Heading3 className="w-5 h-5" />
           </button>
 
-          <div className="w-[1px] h-5 bg-slate-800 mx-1.5 shrink-0" />
+          <div className="w-[1px] h-5 bg-slate-700 mx-1 shrink-0" />
 
           <button
+            type="button"
             onClick={() => editor.chain().focus().toggleBold().run()}
             className={`p-2.5 sm:p-2 rounded-lg hover:bg-slate-800 hover:text-white transition shrink-0 touch-manipulation ${
               editor.isActive("bold")
-                ? "text-sky-300 bg-slate-800/90 shadow-xs"
-                : "text-slate-400"
+                ? "text-sky-300 bg-sky-950/80 border border-sky-700/60 shadow-xs"
+                : "text-slate-200"
             }`}
             title="Bold"
           >
-            <Bold className="w-4.5 h-4.5" />
+            <Bold className="w-5 h-5" />
           </button>
           <button
+            type="button"
             onClick={() => editor.chain().focus().toggleItalic().run()}
             className={`p-2.5 sm:p-2 rounded-lg hover:bg-slate-800 hover:text-white transition shrink-0 touch-manipulation ${
               editor.isActive("italic")
-                ? "text-sky-300 bg-slate-800/90 shadow-xs"
-                : "text-slate-400"
+                ? "text-sky-300 bg-sky-950/80 border border-sky-700/60 shadow-xs"
+                : "text-slate-200"
             }`}
             title="Italic"
           >
-            <Italic className="w-4.5 h-4.5" />
+            <Italic className="w-5 h-5" />
           </button>
           <button
+            type="button"
             onClick={() => editor.chain().focus().toggleCode().run()}
             className={`p-2.5 sm:p-2 rounded-lg hover:bg-slate-800 hover:text-white transition shrink-0 touch-manipulation ${
               editor.isActive("code")
-                ? "text-sky-300 bg-slate-800/90 shadow-xs"
-                : "text-slate-400"
+                ? "text-sky-300 bg-sky-950/80 border border-sky-700/60 shadow-xs"
+                : "text-slate-200"
             }`}
             title="Inline Code"
           >
-            <Code className="w-4.5 h-4.5" />
+            <Code className="w-5 h-5" />
           </button>
 
-          <div className="w-[1px] h-5 bg-slate-800 mx-1.5 shrink-0" />
+          <div className="w-[1px] h-5 bg-slate-700 mx-1 shrink-0" />
 
           <button
+            type="button"
             onClick={() => editor.chain().focus().toggleBulletList().run()}
             className={`p-2.5 sm:p-2 rounded-lg hover:bg-slate-800 hover:text-white transition shrink-0 touch-manipulation ${
               editor.isActive("bulletList")
-                ? "text-sky-300 bg-slate-800/90 shadow-xs"
-                : "text-slate-400"
+                ? "text-sky-300 bg-sky-950/80 border border-sky-700/60 shadow-xs"
+                : "text-slate-200"
             }`}
             title="Bullet List"
           >
-            <List className="w-4.5 h-4.5" />
+            <List className="w-5 h-5" />
           </button>
           <button
+            type="button"
             onClick={() => editor.chain().focus().toggleOrderedList().run()}
             className={`p-2.5 sm:p-2 rounded-lg hover:bg-slate-800 hover:text-white transition shrink-0 touch-manipulation ${
               editor.isActive("orderedList")
-                ? "text-sky-300 bg-slate-800/90 shadow-xs"
-                : "text-slate-400"
+                ? "text-sky-300 bg-sky-950/80 border border-sky-700/60 shadow-xs"
+                : "text-slate-200"
             }`}
             title="Numbered List"
           >
-            <ListOrdered className="w-4.5 h-4.5" />
+            <ListOrdered className="w-5 h-5" />
           </button>
           <button
+            type="button"
             onClick={() => editor.chain().focus().toggleTaskList().run()}
             className={`p-2.5 sm:p-2 rounded-lg hover:bg-slate-800 hover:text-white transition shrink-0 touch-manipulation ${
               editor.isActive("taskList")
-                ? "text-sky-300 bg-slate-800/90 shadow-xs"
-                : "text-slate-400"
+                ? "text-sky-300 bg-sky-950/80 border border-sky-700/60 shadow-xs"
+                : "text-slate-200"
             }`}
             title="Task Checklist"
           >
-            <CheckSquare className="w-4.5 h-4.5" />
+            <CheckSquare className="w-5 h-5" />
           </button>
           <button
+            type="button"
             onClick={() => editor.chain().focus().toggleBlockquote().run()}
             className={`p-2.5 sm:p-2 rounded-lg hover:bg-slate-800 hover:text-white transition shrink-0 touch-manipulation ${
               editor.isActive("blockquote")
-                ? "text-sky-300 bg-slate-800/90 shadow-xs"
-                : "text-slate-400"
+                ? "text-sky-300 bg-sky-950/80 border border-sky-700/60 shadow-xs"
+                : "text-slate-200"
             }`}
             title="Blockquote"
           >
-            <Quote className="w-4.5 h-4.5" />
+            <Quote className="w-5 h-5" />
           </button>
         </div>
 
         {/* Word Count & Read Time Summary */}
-        <div className="hidden sm:flex items-center gap-2 text-xs sm:text-sm text-slate-400 shrink-0 font-medium pl-3 border-l border-slate-800">
+        <div className="hidden sm:flex items-center gap-2 text-xs sm:text-sm text-slate-300 shrink-0 font-medium pl-3 border-l border-slate-700">
           <span>{wordCount} words</span>
           <span>·</span>
           <span>~{readingTime} min read</span>

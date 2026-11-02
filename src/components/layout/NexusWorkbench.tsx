@@ -457,7 +457,7 @@ export const NexusWorkbench: React.FC = () => {
   );
 
   return (
-    <div className="flex h-screen w-screen bg-[#06080F] text-slate-100 overflow-hidden font-sans relative">
+    <div className="flex h-dvh w-screen bg-[#06080F] text-slate-100 overflow-hidden font-sans relative">
       {/* 1. Mobile Backdrop for Sidebar Drawer */}
       {isSidebarOpen && (
         <div
@@ -719,7 +719,7 @@ export const NexusWorkbench: React.FC = () => {
       </aside>
 
       {/* 3. Main Workbench Canvas */}
-      <main className="flex-1 flex flex-col h-full overflow-hidden bg-[#06080F]">
+      <main className="flex-1 flex flex-col min-w-0 min-h-0 h-full overflow-hidden bg-[#06080F]">
         {/* Top Header Bar with Hierarchical Breadcrumbs */}
         <header className="h-14 border-b border-slate-800/80 bg-[#0B0F19]/90 backdrop-blur-md px-3 sm:px-5 flex items-center justify-between z-10 flex-shrink-0">
           <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 flex-1">
@@ -819,12 +819,12 @@ export const NexusWorkbench: React.FC = () => {
         </header>
 
         {/* View Container */}
-        <div className="flex-1 flex overflow-hidden relative">
+        <div className="flex-1 flex min-h-0 overflow-hidden relative">
           {/* Main workspace panes */}
-          <div className="flex-1 flex overflow-hidden">
+          <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
             {/* Full-width Editor Canvas */}
             {activeNote ? (
-              <div className="h-full w-full flex flex-col">
+              <div className="flex-1 min-h-0 w-full flex flex-col overflow-hidden">
                 <NexusEditor
                   initialContent={activeNote.content}
                   noteTitle={activeNote.title}

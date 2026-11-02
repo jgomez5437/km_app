@@ -66,15 +66,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 bg-black/70 backdrop-blur-sm p-4">
       <div className="w-full max-w-xl bg-[#0B0F19] border border-slate-800/80 rounded-xl shadow-2xl overflow-hidden flex flex-col">
         {/* Search Input Bar */}
-        <div className="flex items-center px-4 py-3 border-b border-slate-800 bg-[#06080F]">
-          <Search className="w-4 h-4 text-slate-400 mr-2.5" />
+        <div className="flex items-center px-4.5 py-3.5 border-b border-slate-800 bg-[#06080F]">
+          <Search className="w-5 h-5 text-slate-400 mr-3" />
           <input
             ref={inputRef}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Type a command or search notes in Astro Vault..."
-            className="w-full bg-transparent text-sm text-slate-100 placeholder-slate-500 focus:outline-none"
+            className="w-full bg-transparent text-base text-slate-100 placeholder-slate-500 focus:outline-none"
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 if (filteredNotes.length > 0) {
@@ -87,27 +87,27 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               }
             }}
           />
-          <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] text-slate-400 bg-slate-800 rounded border border-slate-700">
+          <kbd className="hidden sm:inline-block px-2 py-0.5 text-xs text-slate-400 bg-slate-800 rounded border border-slate-700 font-mono">
             ESC
           </kbd>
         </div>
 
         {/* Results List */}
-        <div className="max-h-80 overflow-y-auto p-2 space-y-1 text-xs">
+        <div className="max-h-96 overflow-y-auto p-2.5 space-y-1.5 text-sm">
           {query.trim() && !exactMatch && (
             <button
               onClick={() => {
                 onCreateNote(query.trim());
                 handleClose();
               }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-sky-300 hover:bg-sky-950/40 hover:border hover:border-sky-800/40 transition group"
+              className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-left text-sky-300 hover:bg-sky-950/40 hover:border hover:border-sky-800/40 transition group"
             >
-              <Plus className="w-4 h-4 text-sky-400" />
+              <Plus className="w-5 h-5 text-sky-400 shrink-0" />
               <div className="flex-1">
                 <span>Create new note: </span>
                 <span className="font-semibold text-white">&ldquo;{query.trim()}&rdquo;</span>
               </div>
-              <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition" />
+              <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition shrink-0" />
             </button>
           )}
 
@@ -119,12 +119,12 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                   onSelectNote(note.id);
                   handleClose();
                 }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-slate-300 hover:bg-slate-800/70 transition group"
+                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-left text-slate-300 hover:bg-slate-800/70 transition group"
               >
-                <FileText className="w-4 h-4 text-slate-400 group-hover:text-sky-400" />
+                <FileText className="w-4.5 h-4.5 text-slate-400 group-hover:text-sky-400 shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-slate-200 truncate group-hover:text-white">{note.title}</div>
-                  <div className="text-slate-400 text-[11px] flex items-center gap-2">
+                  <div className="font-medium text-slate-200 truncate group-hover:text-white text-sm">{note.title}</div>
+                  <div className="text-slate-400 text-xs flex items-center gap-2 mt-0.5">
                     {note.parentId && <span className="text-emerald-400">Subpage</span>}
                     {note.tags && note.tags.length > 0 && (
                       <span>#{note.tags.join(" #")}</span>
@@ -134,14 +134,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               </button>
             ))
           ) : query.trim() ? (
-            <div className="p-4 text-center text-slate-400 text-xs">
+            <div className="p-4 text-center text-slate-400 text-sm">
               No existing notes found. Press <strong>Enter</strong> to create &ldquo;{query}&rdquo;.
             </div>
           ) : null}
         </div>
 
         {/* Footer shortcuts */}
-        <div className="px-3 py-2 bg-[#06080F] border-t border-slate-800 text-[10px] text-slate-400 flex items-center justify-between">
+        <div className="px-4 py-2.5 bg-[#06080F] border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span><strong>↑↓</strong> navigate</span>
             <span><strong>↵</strong> select</span>

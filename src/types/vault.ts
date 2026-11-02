@@ -17,15 +17,9 @@ export interface Folder {
   createdAt?: number;
 }
 
-export interface AISettings {
-  provider: 'local-ollama' | 'openai' | 'gemini' | 'anthropic';
-  apiKey?: string;
-  endpoint?: string;
-  model: string;
-}
-
 export interface AuthUser {
   id: string;
   email: string;
   name: string;
 }
+

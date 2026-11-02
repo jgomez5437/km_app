@@ -99,9 +99,17 @@ Instructions:
           );
           if (listRes.ok) {
             const listData = await listRes.json();
-            const availableModels: string[] = (listData.models || [])
-              .filter((m: any) => m.supportedGenerationMethods?.includes("generateContent"))
-              .map((m: any) => m.name.replace(/^models\//, ""));
+            interface GeminiModelInfo {
+              name: string;
+              supportedGenerationMethods?: string[];
+            }
+            const availableModels: string[] = (
+              (listData.models as GeminiModelInfo[]) || []
+            )
+              .filter((m) =>
+                m.supportedGenerationMethods?.includes("generateContent")
+              )
+              .map((m) => m.name.replace(/^models\//, ""));
 
             // Preferred priority order
             const priorityList = [
@@ -198,11 +206,10 @@ Instructions:
     }
 
     return NextResponse.json({ text: reply, modelUsed: selectedModel });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("AI chat error:", err);
-    return NextResponse.json(
-      { error: err.message || "Failed to process AI chat request." },
-      { status: 500 }
-    );
+    const message =
+      err instanceof Error ? err.message : "Failed to process AI chat request.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

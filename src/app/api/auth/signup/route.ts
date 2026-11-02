@@ -140,10 +140,11 @@ export async function POST(req: Request) {
     });
 
     return response;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Sign up error:", error);
+    const details = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "Account creation failed", details: error.message },
+      { error: "Account creation failed", details },
       { status: 500 }
     );
   }

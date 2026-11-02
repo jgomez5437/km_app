@@ -6,8 +6,6 @@ import {
   Search,
   FileText,
   Plus,
-  Sparkles,
-  Command,
   ArrowRight,
 } from "lucide-react";
 
@@ -29,11 +27,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement | null>(null);
 
+  const handleClose = React.useCallback(() => {
+    setQuery("");
+    onClose();
+  }, [onClose]);
+
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 50);
-    } else {
-      setQuery("");
+      const timer = setTimeout(() => inputRef.current?.focus(), 50);
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
 
@@ -41,12 +43,12 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
-        onClose();
+        handleClose();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, handleClose]);
 
   if (!isOpen) return null;
 
@@ -77,10 +79,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               if (e.key === "Enter") {
                 if (filteredNotes.length > 0) {
                   onSelectNote(filteredNotes[0].id);
-                  onClose();
+                  handleClose();
                 } else if (query.trim()) {
                   onCreateNote(query.trim());
-                  onClose();
+                  handleClose();
                 }
               }
             }}
@@ -96,14 +98,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             <button
               onClick={() => {
                 onCreateNote(query.trim());
-                onClose();
+                handleClose();
               }}
               className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-sky-300 hover:bg-sky-950/40 hover:border hover:border-sky-800/40 transition group"
             >
               <Plus className="w-4 h-4 text-sky-400" />
               <div className="flex-1">
                 <span>Create new note: </span>
-                <span className="font-semibold text-white">"{query.trim()}"</span>
+                <span className="font-semibold text-white">&ldquo;{query.trim()}&rdquo;</span>
               </div>
               <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition" />
             </button>
@@ -115,7 +117,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                 key={note.id}
                 onClick={() => {
                   onSelectNote(note.id);
-                  onClose();
+                  handleClose();
                 }}
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-slate-300 hover:bg-slate-800/70 transition group"
               >
@@ -133,7 +135,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             ))
           ) : query.trim() ? (
             <div className="p-4 text-center text-slate-400 text-xs">
-              No existing notes found. Press <strong>Enter</strong> to create "{query}".
+              No existing notes found. Press <strong>Enter</strong> to create &ldquo;{query}&rdquo;.
             </div>
           ) : null}
         </div>

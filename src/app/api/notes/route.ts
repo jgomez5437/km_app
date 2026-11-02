@@ -39,10 +39,11 @@ export async function GET() {
       authenticated: true,
       notes: userNotes,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Failed to query notes from Neon:", error);
+    const details = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to fetch notes", details: error.message },
+      { error: "Failed to fetch notes", details },
       { status: 500 }
     );
   }
@@ -58,6 +59,10 @@ export async function POST(req: Request) {
 
   try {
     const session = await getSessionUser();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
     const db = getDb();
     if (!db) throw new Error("Database client unavailable");
@@ -66,7 +71,7 @@ export async function POST(req: Request) {
       .insert(notes)
       .values({
         id: body.id,
-        userId: session?.userId || null,
+        userId: session.userId,
         title: body.title,
         content: body.content,
         folderId: body.folderId || null,
@@ -79,10 +84,11 @@ export async function POST(req: Request) {
       .returning();
 
     return NextResponse.json({ success: true, note: inserted[0] });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Failed to insert note into Neon:", error);
+    const details = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to create note", details: error.message },
+      { error: "Failed to create note", details },
       { status: 500 }
     );
   }

@@ -15,13 +15,15 @@ export async function GET(req: Request, { params }: Params) {
 
   try {
     const session = await getSessionUser();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
     const db = getDb();
     if (!db) throw new Error("Database client unavailable");
 
-    const condition = session
-      ? and(eq(notes.id, id), eq(notes.userId, session.userId))
-      : eq(notes.id, id);
+    const condition = and(eq(notes.id, id), eq(notes.userId, session.userId));
 
     const found = await db.select().from(notes).where(condition).limit(1);
     if (found.length === 0) {
@@ -29,9 +31,10 @@ export async function GET(req: Request, { params }: Params) {
     }
 
     return NextResponse.json({ note: found[0] });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const details = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to fetch note", details: error.message },
+      { error: "Failed to fetch note", details },
       { status: 500 }
     );
   }
@@ -44,14 +47,16 @@ export async function PUT(req: Request, { params }: Params) {
 
   try {
     const session = await getSessionUser();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
     const body = await req.json();
     const db = getDb();
     if (!db) throw new Error("Database client unavailable");
 
-    const condition = session
-      ? and(eq(notes.id, id), eq(notes.userId, session.userId))
-      : eq(notes.id, id);
+    const condition = and(eq(notes.id, id), eq(notes.userId, session.userId));
 
     const updated = await db
       .update(notes)
@@ -73,9 +78,10 @@ export async function PUT(req: Request, { params }: Params) {
     }
 
     return NextResponse.json({ success: true, note: updated[0] });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const details = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to update note", details: error.message },
+      { error: "Failed to update note", details },
       { status: 500 }
     );
   }
@@ -88,21 +94,25 @@ export async function DELETE(req: Request, { params }: Params) {
 
   try {
     const session = await getSessionUser();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
     const db = getDb();
     if (!db) throw new Error("Database client unavailable");
 
-    const condition = session
-      ? and(eq(notes.id, id), eq(notes.userId, session.userId))
-      : eq(notes.id, id);
+    const condition = and(eq(notes.id, id), eq(notes.userId, session.userId));
 
     await db.delete(notes).where(condition);
 
     return NextResponse.json({ success: true, deletedId: id });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const details = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to delete note", details: error.message },
+      { error: "Failed to delete note", details },
       { status: 500 }
     );
   }
 }
+

@@ -17,7 +17,7 @@ import {
 } from "@/lib/storage";
 import { NexusEditor } from "@/components/editor/NexusEditor";
 import { NexusAIAssistant } from "@/components/ai/NexusAIAssistant";
-import { CommandPalette } from "@/components/palette/CommandPalette";
+import { UserSettingsModal } from "@/components/settings/UserSettingsModal";
 import { AuthModal } from "@/components/auth/AuthModal";
 import {
   FileText,
@@ -37,6 +37,7 @@ import {
   X,
   LogOut,
   LogIn,
+  Settings,
 } from "lucide-react";
 
 export const NexusWorkbench: React.FC = () => {
@@ -51,7 +52,7 @@ export const NexusWorkbench: React.FC = () => {
   );
   const [isRightDrawerOpen, setIsRightDrawerOpen] = useState(false);
   const [aiAssistantTab, setAiAssistantTab] = useState<"ask" | "suggest" | "settings">("ask");
-  const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+  const [isUserSettingsOpen, setIsUserSettingsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [syncStatus, setSyncStatus] = useState<"synced" | "syncing" | "offline">("offline");
   const [isCloudConfigured, setIsCloudConfigured] = useState(false);
@@ -199,6 +200,11 @@ export const NexusWorkbench: React.FC = () => {
       saveNotes(updated);
       setActiveNoteId(newNote.id);
 
+      // On mobile viewports, automatically close the left navigation drawer to show the created note
+      if (typeof window !== "undefined" && window.innerWidth < 768) {
+        setIsSidebarOpen(false);
+      }
+
       // If subpage, ensure parent note is expanded in sidebar
       if (parentId) {
         setCollapsedNotes((prev) => {
@@ -222,13 +228,9 @@ export const NexusWorkbench: React.FC = () => {
     [notes, folders, triggerSync]
   );
 
-  // Global Ctrl+K / Ctrl+N shortcut listener
+  // Global Ctrl+N shortcut listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setIsPaletteOpen((prev) => !prev);
-      }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "n") {
         e.preventDefault();
         handleCreateNewNote();
@@ -666,16 +668,28 @@ export const NexusWorkbench: React.FC = () => {
           )}
         </div>
 
-        {/* User Account & Quick Search Footer */}
+        {/* User Account & Settings Footer */}
         <div className="p-3 border-t border-slate-800/80 bg-[#06080F]/80 space-y-2">
           {currentUser ? (
-            <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-[#0E1424] border border-slate-800/80 text-sm">
+            <div
+              onClick={() => setIsUserSettingsOpen(true)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setIsUserSettingsOpen(true);
+                }
+              }}
+              className="flex items-center justify-between px-3 py-2 rounded-lg bg-[#0E1424] hover:bg-[#162032] border border-slate-800/80 hover:border-sky-800/60 text-sm cursor-pointer transition group"
+              title="Open User Settings"
+            >
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-600 text-white font-bold flex items-center justify-center text-xs shrink-0 shadow-sm">
                   {currentUser.name ? currentUser.name[0].toUpperCase() : "U"}
                 </div>
                 <div className="min-w-0">
-                  <div className="text-slate-200 font-medium truncate text-sm leading-tight">
+                  <div className="text-slate-200 group-hover:text-white font-medium truncate text-sm leading-tight">
                     {currentUser.name}
                   </div>
                   <div className="text-slate-500 text-xs truncate leading-tight">
@@ -683,39 +697,46 @@ export const NexusWorkbench: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <button
-                onClick={handleLogout}
-                className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-800/80 rounded-md transition touch-manipulation"
-                title="Log Out"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-1 shrink-0">
+                <span
+                  className="p-1.5 text-slate-500 group-hover:text-sky-400 rounded-md transition"
+                  title="Settings"
+                >
+                  <Settings className="w-4 h-4" />
+                </span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleLogout();
+                  }}
+                  className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-800/80 rounded-md transition touch-manipulation"
+                  title="Log Out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           ) : (
-            <button
-              onClick={() => setIsAuthModalOpen(true)}
-              className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg bg-sky-950/40 border border-sky-800/50 text-sky-300 hover:bg-sky-900/40 hover:text-white transition text-sm font-medium group touch-manipulation shadow-sm shadow-sky-950/30"
-            >
-              <div className="flex items-center gap-2.5">
-                <Cloud className="w-4 h-4 text-sky-400" />
-                <span>Sign In to Cloud Sync</span>
-              </div>
-              <LogIn className="w-4 h-4 opacity-60 group-hover:opacity-100" />
-            </button>
-          )}
-
-          <button
-            onClick={() => setIsPaletteOpen(true)}
-            className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg bg-[#0E1424] border border-slate-800/80 text-slate-400 hover:text-white transition text-sm"
-          >
-            <div className="flex items-center gap-2.5">
-              <Search className="w-4 h-4 text-slate-500" />
-              <span>Search Notes</span>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setIsAuthModalOpen(true)}
+                className="flex-1 flex items-center justify-between px-3 py-2.5 rounded-lg bg-sky-950/40 border border-sky-800/50 text-sky-300 hover:bg-sky-900/40 hover:text-white transition text-sm font-medium group touch-manipulation shadow-sm shadow-sky-950/30"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Cloud className="w-4 h-4 text-sky-400" />
+                  <span>Sign In to Cloud Sync</span>
+                </div>
+                <LogIn className="w-4 h-4 opacity-60 group-hover:opacity-100" />
+              </button>
+              <button
+                onClick={() => setIsUserSettingsOpen(true)}
+                className="p-2.5 rounded-lg bg-[#0E1424] hover:bg-[#162032] border border-slate-800/80 text-slate-400 hover:text-white transition touch-manipulation"
+                title="Open Settings"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
             </div>
-            <kbd className="hidden sm:inline-block px-2 py-0.5 text-xs bg-slate-800/80 rounded border border-slate-700/60 text-slate-400">
-              Ctrl+K
-            </kbd>
-          </button>
+          )}
         </div>
       </aside>
 
@@ -889,13 +910,18 @@ export const NexusWorkbench: React.FC = () => {
         </div>
       </main>
 
-      {/* 5. Global Command Palette Modal */}
-      <CommandPalette
-        isOpen={isPaletteOpen}
-        onClose={() => setIsPaletteOpen(false)}
+      {/* 5. User Settings Modal */}
+      <UserSettingsModal
+        isOpen={isUserSettingsOpen}
+        onClose={() => setIsUserSettingsOpen(false)}
+        currentUser={currentUser}
+        onUpdateUser={(updatedUser) => setCurrentUser(updatedUser)}
+        onLogout={handleLogout}
+        onOpenAuthModal={() => setIsAuthModalOpen(true)}
+        syncStatus={syncStatus}
+        onManualSync={handleManualSync}
         notes={notes}
-        onSelectNote={(id) => setActiveNoteId(id)}
-        onCreateNote={(title) => handleCreateNewNote(title)}
+        folders={folders}
       />
 
       {/* 7. Auth Modal */}

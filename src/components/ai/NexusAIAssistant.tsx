@@ -26,6 +26,7 @@ interface NexusAIAssistantProps {
   currentUser?: AuthUser | null;
   onOpenNote: (noteId: string) => void;
   onInsertWikilink: (targetTitle: string) => void;
+  initialTab?: "ask" | "suggest" | "settings";
 }
 
 interface ChatMessage {
@@ -102,8 +103,17 @@ export const NexusAIAssistant: React.FC<NexusAIAssistantProps> = ({
   currentUser,
   onOpenNote,
   onInsertWikilink,
+  initialTab,
 }) => {
-  const [tab, setTab] = useState<"ask" | "suggest" | "settings">("ask");
+  const [prevInitialTab, setPrevInitialTab] = useState(initialTab);
+  const [tab, setTab] = useState<"ask" | "suggest" | "settings">(initialTab || "ask");
+
+  if (initialTab !== prevInitialTab) {
+    setPrevInitialTab(initialTab);
+    if (initialTab) {
+      setTab(initialTab);
+    }
+  }
   const [query, setQuery] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [copiedLink, setCopiedLink] = useState<string | null>(null);

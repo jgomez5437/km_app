@@ -14,6 +14,8 @@ export async function POST(req: Request) {
       model,
       messages = [],
       vaultContext = "",
+      mode = "vault",
+      articleContext,
     } = body;
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
@@ -34,7 +36,42 @@ export async function POST(req: Request) {
 
     const cleanKey = apiKey ? apiKey.trim() : "";
 
-    const systemPrompt = `You are Astro AI Copilot, the intelligent research assistant for the user's Astro Knowledge Base vault.
+    let systemPrompt = "";
+
+    if (mode === "article-ask") {
+      const title = articleContext?.title?.trim() || "Untitled Note";
+      const content = articleContext?.content ?? "";
+      systemPrompt = `You are an AI assistant helping the user with the article "${title}".
+You have access ONLY to this specific article's content provided below. You must answer questions based solely on the context of this article. Do not cite, reference, or assume information from any other notes or vault sources.
+
+=== ARTICLE TITLE ===
+${title}
+
+=== ARTICLE CONTENT ===
+${content || "(empty note)"}
+=== END ARTICLE CONTENT ===
+
+Instructions:
+- Provide clear, accurate, and helpful answers strictly based on this article.
+- If the question cannot be answered from the article, state that clearly and provide general helpful insights related to the topic if appropriate.
+- Use clean Markdown with headers, bullet points, or code snippets where appropriate.`;
+    } else if (mode === "article-write") {
+      const title = articleContext?.title?.trim() || "Untitled Note";
+      const content = articleContext?.content ?? "";
+      systemPrompt = `You are an expert writing assistant and content drafter.
+The user is working on an article titled "${title}".
+
+=== CURRENT ARTICLE CONTENT ===
+${content || "(empty note)"}
+=== END ARTICLE CONTENT ===
+
+Instructions:
+- Write a clear, comprehensive, and well-structured draft that fulfills the user's request.
+- Match the tone and style of the article if content exists.
+- Output clean Markdown (using headers, paragraphs, bullet points, checklists, or code blocks where appropriate).
+- Do NOT include conversational filler such as "Sure, here is your draft:" or "I hope this helps!". Output only the draft content directly so it can be inserted seamlessly into the article.`;
+    } else {
+      systemPrompt = `You are Astro AI Copilot, the intelligent research assistant for the user's Astro Knowledge Base vault.
 You have direct access to the user's private notes, folders, and subpages provided in the context below.
 
 === VAULT CONTEXT ===
@@ -47,6 +84,7 @@ Instructions:
 - If citing notes, use bold titles or bracket syntax (e.g. **Welcome to Astro**).
 - If the requested information is not in the vault, state that clearly and offer helpful related insights.
 - Use clean Markdown with headers, bullet points, and code blocks where helpful.`;
+    }
 
     // 1. Google Gemini Provider
     if (provider === "gemini") {

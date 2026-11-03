@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -9,6 +9,8 @@ import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 import { Markdown } from "tiptap-markdown";
 import { sanitizeCorruptedContent } from "@/lib/storage";
+import { AskAIPanel } from "@/components/editor/AskAIPanel";
+import { WriteWithAIPanel } from "@/components/editor/WriteWithAIPanel";
 import {
   Bold,
   Italic,
@@ -20,6 +22,8 @@ import {
   ListOrdered,
   CheckSquare,
   Quote,
+  Sparkles,
+  Wand2,
 } from "lucide-react";
 
 interface NexusEditorProps {
@@ -28,6 +32,8 @@ interface NexusEditorProps {
   noteTitle: string;
   onUpdateTitle: (newTitle: string) => void;
   onUpdateContent: (content: string) => void;
+  currentUserId?: string;
+  onOpenAISettings?: () => void;
 }
 
 interface MarkdownSerializerStateLike {
@@ -124,9 +130,12 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
   noteTitle,
   onUpdateTitle,
   onUpdateContent,
+  currentUserId,
+  onOpenAISettings,
 }) => {
   const lastEmittedMarkdownRef = useRef<string>(sanitizeCorruptedContent(initialContent));
   const currentNoteIdRef = useRef<string>(noteId);
+  const [activeAIPanel, setActiveAIPanel] = useState<"ask" | "write" | null>(null);
 
   const editor = useEditor({
     extensions: EDITOR_EXTENSIONS,
@@ -181,6 +190,28 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
   const readingTime = Math.ceil(wordCount / 200);
 
+  const handleApproveDraft = (draftMarkdown: string) => {
+    const trimmed = draftMarkdown.trim();
+    if (!trimmed) return;
+
+    const currentDocText = editor.getText().trim();
+    if (!currentDocText) {
+      editor.commands.setContent(trimmed);
+    } else {
+      // Focus and insert at cursor, or append to end
+      editor.chain().focus().insertContent(`\n\n${trimmed}\n`).run();
+    }
+
+    const storage = editor.storage as unknown as {
+      markdown?: { getMarkdown: () => string };
+    };
+    const md = storage.markdown?.getMarkdown() ?? "";
+    lastEmittedMarkdownRef.current = md;
+    onUpdateContent(md);
+
+    setActiveAIPanel(null);
+  };
+
   return (
     <div className="flex-1 flex flex-col min-h-0 h-full w-full bg-[#06080F] text-slate-100 overflow-hidden relative">
       {/* 1. Main Editable Canvas (Title and Body now clean at the top) */}
@@ -201,9 +232,67 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
         </div>
       </div>
 
+      {/* Floating AI Panels */}
+      {activeAIPanel === "ask" && (
+        <AskAIPanel
+          key={noteId}
+          noteId={noteId}
+          noteTitle={noteTitle}
+          getCurrentContent={() => lastEmittedMarkdownRef.current}
+          currentUserId={currentUserId}
+          onClose={() => setActiveAIPanel(null)}
+          onOpenSettings={onOpenAISettings}
+        />
+      )}
+
+      {activeAIPanel === "write" && (
+        <WriteWithAIPanel
+          noteTitle={noteTitle}
+          getCurrentContent={() => lastEmittedMarkdownRef.current}
+          currentUserId={currentUserId}
+          onApprove={handleApproveDraft}
+          onDecline={() => setActiveAIPanel(null)}
+          onOpenSettings={onOpenAISettings}
+        />
+      )}
+
       {/* 2. Formatting Toolbar Docked at the Bottom */}
       <div className="fixed bottom-0 inset-x-0 md:static shrink-0 z-20 px-3 sm:px-8 pt-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-[#0E1525]/95 backdrop-blur-md border-t border-slate-700/90 shadow-[0_-8px_24px_rgba(0,0,0,0.65)] flex items-center justify-between gap-3 text-slate-200">
         <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+          {/* 1st Button: *icon* Ask AI */}
+          <button
+            type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => setActiveAIPanel((prev) => (prev === "ask" ? null : "ask"))}
+            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition shrink-0 touch-manipulation ${
+              activeAIPanel === "ask"
+                ? "text-sky-200 bg-sky-950/90 border border-sky-600/80 shadow-xs shadow-sky-950/50"
+                : "text-sky-300 hover:text-white hover:bg-slate-800/90 bg-sky-950/30 border border-sky-800/40"
+            }`}
+            title="Ask AI about this article"
+          >
+            <Sparkles className="w-4 h-4 text-sky-400" />
+            <span>Ask AI</span>
+          </button>
+
+          {/* 2nd Button: *icon* Write with AI */}
+          <button
+            type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => setActiveAIPanel((prev) => (prev === "write" ? null : "write"))}
+            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition shrink-0 touch-manipulation ${
+              activeAIPanel === "write"
+                ? "text-indigo-200 bg-indigo-950/90 border border-indigo-600/80 shadow-xs shadow-indigo-950/50"
+                : "text-indigo-300 hover:text-white hover:bg-slate-800/90 bg-indigo-950/30 border border-indigo-800/40"
+            }`}
+            title="Write with AI"
+          >
+            <Wand2 className="w-4 h-4 text-indigo-400" />
+            <span>Write with AI</span>
+          </button>
+
+          <div className="w-[1px] h-5 bg-slate-700 mx-1 shrink-0" />
+
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}

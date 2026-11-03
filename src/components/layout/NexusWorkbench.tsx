@@ -50,6 +50,7 @@ export const NexusWorkbench: React.FC = () => {
     typeof window !== "undefined" ? window.innerWidth >= 768 : false
   );
   const [isRightDrawerOpen, setIsRightDrawerOpen] = useState(false);
+  const [aiAssistantTab, setAiAssistantTab] = useState<"ask" | "suggest" | "settings">("ask");
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [syncStatus, setSyncStatus] = useState<"synced" | "syncing" | "offline">("offline");
@@ -831,6 +832,11 @@ export const NexusWorkbench: React.FC = () => {
                   noteTitle={activeNote.title}
                   onUpdateTitle={handleUpdateTitle}
                   onUpdateContent={handleUpdateContent}
+                  currentUserId={currentUser?.id}
+                  onOpenAISettings={() => {
+                    setAiAssistantTab("settings");
+                    setIsRightDrawerOpen(true);
+                  }}
                 />
               </div>
             ) : (
@@ -867,6 +873,7 @@ export const NexusWorkbench: React.FC = () => {
                     allNotes={notes}
                     folders={folders}
                     currentUser={currentUser}
+                    initialTab={aiAssistantTab}
                     onOpenNote={(id) => {
                       setActiveNoteId(id);
                       if (typeof window !== "undefined" && window.innerWidth < 768) {

@@ -7,6 +7,7 @@ import {
   STORAGE_KEY_BASE,
   StoredAISettings,
 } from "@/lib/ai";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import {
   X,
   User as UserIcon,
@@ -96,6 +97,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   const [model, setModel] = useState(initialAI.model);
   const [showKey, setShowKey] = useState(false);
   const [aiSavedFeedback, setAiSavedFeedback] = useState(false);
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
   if (!isOpen) return null;
 
@@ -176,17 +178,13 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   };
 
   const handleClearLocalCache = () => {
-    if (
-      confirm(
-        "Clear local browser storage cache and reload? Make sure any cloud notes are synced first."
-      )
-    ) {
-      localStorage.removeItem("nexus_vault_notes_v3");
-      localStorage.removeItem("nexus_vault_folders_v3");
-      localStorage.removeItem("nexus_vault_deleted_notes_v1");
-      localStorage.removeItem("nexus_vault_deleted_folders_v1");
-      window.location.reload();
-    }
+    localStorage.removeItem("nexus_vault_notes_v3");
+    localStorage.removeItem("nexus_vault_folders_v3");
+    localStorage.removeItem("nexus_vault_deleted_notes_v1");
+    localStorage.removeItem("nexus_vault_deleted_folders_v1");
+    localStorage.removeItem("nexus_vault_collapsed_folders_v1");
+    localStorage.removeItem("nexus_vault_collapsed_notes_v1");
+    window.location.reload();
   };
 
   return (
@@ -588,7 +586,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
 
                 <button
                   type="button"
-                  onClick={handleClearLocalCache}
+                  onClick={() => setIsResetConfirmOpen(true)}
                   className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-[#06080F] hover:bg-red-950/30 border border-slate-800 hover:border-red-800/50 text-red-300 text-xs font-semibold transition"
                 >
                   <div className="flex items-center gap-2.5">
@@ -602,6 +600,18 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
           )}
         </div>
       </div>
+
+      {/* Reset Cache Confirmation Modal */}
+      <ConfirmModal
+        isOpen={isResetConfirmOpen}
+        title="Reset Local Browser Cache"
+        message="Are you sure you want to clear your local browser storage cache and reload? Make sure any local changes are synced to cloud storage first."
+        confirmLabel="Reset & Reload"
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={handleClearLocalCache}
+        onCancel={() => setIsResetConfirmOpen(false)}
+      />
     </div>
   );
 };

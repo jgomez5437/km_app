@@ -12,6 +12,10 @@ import {
   createFolder,
   recordDeletedNotes,
   recordDeletedFolders,
+  loadCollapsedFolders,
+  saveCollapsedFolders,
+  loadCollapsedNotes,
+  saveCollapsedNotes,
   syncWithCloud,
   scheduleDebouncedSync,
 } from "@/lib/storage";
@@ -19,6 +23,7 @@ import { NexusEditor } from "@/components/editor/NexusEditor";
 import { NexusAIAssistant } from "@/components/ai/NexusAIAssistant";
 import { UserSettingsModal } from "@/components/settings/UserSettingsModal";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import {
   FileText,
   Plus,
@@ -60,8 +65,29 @@ export const NexusWorkbench: React.FC = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // Tree collapse state
-  const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set());
-  const [collapsedNotes, setCollapsedNotes] = useState<Set<string>>(new Set());
+  const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(() =>
+    loadCollapsedFolders()
+  );
+  const [collapsedNotes, setCollapsedNotes] = useState<Set<string>>(() =>
+    loadCollapsedNotes()
+  );
+
+  // In-app Confirmation Modal State
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    variant?: "danger" | "warning" | "info";
+    showCancel?: boolean;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   // Inline folder creation
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
@@ -210,6 +236,7 @@ export const NexusWorkbench: React.FC = () => {
         setCollapsedNotes((prev) => {
           const next = new Set(prev);
           next.delete(parentId);
+          saveCollapsedNotes(next);
           return next;
         });
       }
@@ -219,6 +246,7 @@ export const NexusWorkbench: React.FC = () => {
         setCollapsedFolders((prev) => {
           const next = new Set(prev);
           next.delete(folderId);
+          saveCollapsedFolders(next);
           return next;
         });
       }
@@ -260,59 +288,117 @@ export const NexusWorkbench: React.FC = () => {
 
   const handleDeleteFolder = (folderId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm("Delete this folder? Notes inside will become unfiled.")) {
-      const remainingFolders = folders.filter((f) => f.id !== folderId);
-      setFolders(remainingFolders);
-      saveFolders(remainingFolders);
-      recordDeletedFolders([folderId]);
+    const folder = folders.find((f) => f.id === folderId);
+    const folderName = folder ? `"${folder.name}"` : "this folder";
 
-      // Unfile notes that were in this folder and bump updatedAt so cloud sync saves the change
-      const now = Date.now();
-      const updatedNotes = notes.map((n) =>
-        n.folderId === folderId
-          ? { ...n, folderId: undefined, updatedAt: now }
-          : n
-      );
-      setNotes(updatedNotes);
-      saveNotes(updatedNotes);
-      triggerSync(updatedNotes, remainingFolders);
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: "Delete Folder",
+      message: `Delete ${folderName}? Any notes inside will become unfiled notes in the root list.`,
+      confirmLabel: "Delete Folder",
+      cancelLabel: "Cancel",
+      variant: "danger",
+      showCancel: true,
+      onConfirm: () => {
+        setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+        const remainingFolders = folders.filter((f) => f.id !== folderId);
+        setFolders(remainingFolders);
+        saveFolders(remainingFolders);
+        recordDeletedFolders([folderId]);
+
+        setCollapsedFolders((prev) => {
+          const next = new Set(prev);
+          next.delete(folderId);
+          saveCollapsedFolders(next);
+          return next;
+        });
+
+        // Unfile notes that were in this folder and bump updatedAt so cloud sync saves the change
+        const now = Date.now();
+        const updatedNotes = notes.map((n) =>
+          n.folderId === folderId
+            ? { ...n, folderId: undefined, updatedAt: now }
+            : n
+        );
+        setNotes(updatedNotes);
+        saveNotes(updatedNotes);
+        triggerSync(updatedNotes, remainingFolders);
+      },
+    });
   };
 
   const handleDeleteNote = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (notes.length <= 1) {
-      alert("Cannot delete the last remaining note in the vault.");
+      setConfirmDialog({
+        isOpen: true,
+        title: "Cannot Delete Note",
+        message: "Cannot delete the last remaining note in the vault. Create another note before removing this one.",
+        confirmLabel: "Understood",
+        variant: "warning",
+        showCancel: false,
+        onConfirm: () => {
+          setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+        },
+      });
       return;
     }
-    if (confirm("Delete this note and its subpages?")) {
-      // Find all descendant note IDs recursively
-      const idsToDelete = new Set<string>([id]);
-      let added = true;
-      while (added) {
-        added = false;
-        notes.forEach((n) => {
-          if (n.parentId && idsToDelete.has(n.parentId) && !idsToDelete.has(n.id)) {
-            idsToDelete.add(n.id);
-            added = true;
-          }
+
+    const noteToDelete = notes.find((n) => n.id === id);
+    const noteTitle = noteToDelete?.title.trim() ? `"${noteToDelete.title.trim()}"` : "this note";
+    const subpages = notes.filter((n) => n.parentId === id);
+    const warningMessage =
+      subpages.length > 0
+        ? `Delete ${noteTitle} and its ${subpages.length} nested ${
+            subpages.length === 1 ? "subpage" : "subpages"
+          }? This action cannot be undone.`
+        : `Delete ${noteTitle}? This action cannot be undone.`;
+
+    setConfirmDialog({
+      isOpen: true,
+      title: "Delete Note",
+      message: warningMessage,
+      confirmLabel: "Delete Note",
+      cancelLabel: "Cancel",
+      variant: "danger",
+      showCancel: true,
+      onConfirm: () => {
+        setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+        // Find all descendant note IDs recursively
+        const idsToDelete = new Set<string>([id]);
+        let added = true;
+        while (added) {
+          added = false;
+          notes.forEach((n) => {
+            if (n.parentId && idsToDelete.has(n.parentId) && !idsToDelete.has(n.id)) {
+              idsToDelete.add(n.id);
+              added = true;
+            }
+          });
+        }
+
+        const deletedList = Array.from(idsToDelete);
+        recordDeletedNotes(deletedList);
+
+        setCollapsedNotes((prev) => {
+          const next = new Set(prev);
+          deletedList.forEach((delId) => next.delete(delId));
+          saveCollapsedNotes(next);
+          return next;
         });
-      }
 
-      const deletedList = Array.from(idsToDelete);
-      recordDeletedNotes(deletedList);
-
-      const remaining = notes.filter((n) => !idsToDelete.has(n.id));
-      setNotes(remaining);
-      saveNotes(remaining);
-      if (idsToDelete.has(activeNoteId)) {
-        setActiveNoteId(remaining[0].id);
-      }
-      triggerSync(remaining, folders);
-      deletedList.forEach((delId) => {
-        fetch(`/api/notes/${delId}`, { method: "DELETE" }).catch(() => {});
-      });
-    }
+        const remaining = notes.filter((n) => !idsToDelete.has(n.id));
+        setNotes(remaining);
+        saveNotes(remaining);
+        if (idsToDelete.has(activeNoteId)) {
+          setActiveNoteId(remaining[0].id);
+        }
+        triggerSync(remaining, folders);
+        deletedList.forEach((delId) => {
+          fetch(`/api/notes/${delId}`, { method: "DELETE" }).catch(() => {});
+        });
+      },
+    });
   };
 
   const handleUpdateTitle = (newTitle: string) => {
@@ -342,6 +428,7 @@ export const NexusWorkbench: React.FC = () => {
       const next = new Set(prev);
       if (next.has(folderId)) next.delete(folderId);
       else next.add(folderId);
+      saveCollapsedFolders(next);
       return next;
     });
   };
@@ -352,6 +439,7 @@ export const NexusWorkbench: React.FC = () => {
       const next = new Set(prev);
       if (next.has(noteId)) next.delete(noteId);
       else next.add(noteId);
+      saveCollapsedNotes(next);
       return next;
     });
   };
@@ -929,6 +1017,19 @@ export const NexusWorkbench: React.FC = () => {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         onSuccess={handleAuthSuccess}
+      />
+
+      {/* 8. Confirmation / Alert Modal */}
+      <ConfirmModal
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmLabel={confirmDialog.confirmLabel}
+        cancelLabel={confirmDialog.cancelLabel}
+        variant={confirmDialog.variant}
+        showCancel={confirmDialog.showCancel}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
       />
     </div>
   );

@@ -56,7 +56,12 @@ export const NexusWorkbench: React.FC = () => {
     typeof window !== "undefined" ? window.innerWidth >= 768 : false
   );
   const [isRightDrawerOpen, setIsRightDrawerOpen] = useState(false);
-  const [aiAssistantTab, setAiAssistantTab] = useState<"ask" | "suggest" | "settings">("ask");
+  const [userSettingsTab, setUserSettingsTab] = useState<"profile" | "ai" | "vault">("profile");
+
+  const handleOpenAISettings = () => {
+    setUserSettingsTab("ai");
+    setIsUserSettingsOpen(true);
+  };
   const [isUserSettingsOpen, setIsUserSettingsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [syncStatus, setSyncStatus] = useState<"synced" | "syncing" | "offline">("offline");
@@ -415,13 +420,6 @@ export const NexusWorkbench: React.FC = () => {
     triggerSync(updated, folders);
   };
 
-  const handleInsertWikilink = (targetTitle: string) => {
-    if (!activeNote) return;
-    const wikilink = `[[${targetTitle}]]`;
-    if (activeNote.content.includes(wikilink)) return;
-    const nextContent = `${activeNote.content.trimEnd()}\n\n${wikilink}`;
-    handleUpdateContent(nextContent);
-  };
 
   const toggleFolderCollapse = (folderId: string) => {
     setCollapsedFolders((prev) => {
@@ -760,12 +758,16 @@ export const NexusWorkbench: React.FC = () => {
         <div className="p-3 border-t border-slate-800/80 bg-[#06080F]/80 space-y-2">
           {currentUser ? (
             <div
-              onClick={() => setIsUserSettingsOpen(true)}
+              onClick={() => {
+              setUserSettingsTab("profile");
+              setIsUserSettingsOpen(true);
+            }}
               role="button"
               tabIndex={0}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
+                  setUserSettingsTab("profile");
                   setIsUserSettingsOpen(true);
                 }
               }}
@@ -817,7 +819,10 @@ export const NexusWorkbench: React.FC = () => {
                 <LogIn className="w-4 h-4 opacity-60 group-hover:opacity-100" />
               </button>
               <button
-                onClick={() => setIsUserSettingsOpen(true)}
+                onClick={() => {
+                setUserSettingsTab("profile");
+                setIsUserSettingsOpen(true);
+              }}
                 className="p-2.5 rounded-lg bg-[#0E1424] hover:bg-[#162032] border border-slate-800/80 text-slate-400 hover:text-white transition touch-manipulation"
                 title="Open Settings"
               >
@@ -942,10 +947,7 @@ export const NexusWorkbench: React.FC = () => {
                   onUpdateTitle={handleUpdateTitle}
                   onUpdateContent={handleUpdateContent}
                   currentUserId={currentUser?.id}
-                  onOpenAISettings={() => {
-                    setAiAssistantTab("settings");
-                    setIsRightDrawerOpen(true);
-                  }}
+                  onOpenAISettings={handleOpenAISettings}
                 />
               </div>
             ) : (
@@ -982,14 +984,7 @@ export const NexusWorkbench: React.FC = () => {
                     allNotes={notes}
                     folders={folders}
                     currentUser={currentUser}
-                    initialTab={aiAssistantTab}
-                    onOpenNote={(id) => {
-                      setActiveNoteId(id);
-                      if (typeof window !== "undefined" && window.innerWidth < 768) {
-                        setIsRightDrawerOpen(false);
-                      }
-                    }}
-                    onInsertWikilink={handleInsertWikilink}
+                    onOpenAISettings={handleOpenAISettings}
                   />
                 </div>
               </aside>
@@ -1010,6 +1005,7 @@ export const NexusWorkbench: React.FC = () => {
         onManualSync={handleManualSync}
         notes={notes}
         folders={folders}
+        initialTab={userSettingsTab}
       />
 
       {/* 7. Auth Modal */}

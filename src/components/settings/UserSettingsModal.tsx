@@ -99,6 +99,21 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   const [aiSavedFeedback, setAiSavedFeedback] = useState(false);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
+  // Reload settings and reset tab when modal opens
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
+    if (isOpen) {
+      setActiveTab(initialTab);
+      const currentAI = loadAISettings(currentUser?.id);
+      setProvider(currentAI.provider);
+      setEndpoint(currentAI.endpoint);
+      setOpenaiKey(currentAI.openaiKey);
+      setGeminiKey(currentAI.geminiKey);
+      setModel(currentAI.model);
+    }
+  }
+
   if (!isOpen) return null;
 
   const saveAISettings = (override?: Partial<StoredAISettings>) => {
@@ -114,6 +129,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
       const serialized = JSON.stringify(payload);
       localStorage.setItem(storageKey, serialized);
       localStorage.setItem("astro_ai_settings_v1", serialized);
+      window.dispatchEvent(new Event("astro_ai_settings_updated"));
       setAiSavedFeedback(true);
       setTimeout(() => setAiSavedFeedback(false), 2500);
     } catch (e) {
@@ -450,6 +466,9 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                       placeholder="http://localhost:11434"
                       className="w-full bg-[#06080F] border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-sky-500 transition"
                     />
+                    <p className="text-xs text-slate-500 mt-1.5">
+                      Default: http://localhost:11434 (zero telemetry, runs locally on your machine).
+                    </p>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 mb-1.5">
@@ -487,44 +506,118 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                         <span>{showKey ? "Hide" : "Show"}</span>
                       </button>
                     </div>
-                    <input
-                      type={showKey ? "text" : "password"}
-                      placeholder={
-                        provider === "gemini" ? "AIzaSy..." : "sk-..."
-                      }
-                      value={provider === "gemini" ? geminiKey : openaiKey}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (provider === "gemini") {
-                          setGeminiKey(val);
-                          saveAISettings({ geminiKey: val });
-                        } else {
-                          setOpenaiKey(val);
-                          saveAISettings({ openaiKey: val });
+                    <div className="relative">
+                      <input
+                        type={showKey ? "text" : "password"}
+                        placeholder={
+                          provider === "gemini" ? "AIzaSy..." : "sk-..."
                         }
-                      }}
-                      className="w-full bg-[#06080F] border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 font-mono focus:outline-none focus:border-sky-500 transition"
-                    />
+                        value={provider === "gemini" ? geminiKey : openaiKey}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (provider === "gemini") {
+                            setGeminiKey(val);
+                            saveAISettings({ geminiKey: val });
+                          } else {
+                            setOpenaiKey(val);
+                            saveAISettings({ openaiKey: val });
+                          }
+                        }}
+                        onBlur={() => saveAISettings()}
+                        className="w-full bg-[#06080F] border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 font-mono focus:outline-none focus:border-sky-500 transition pr-14"
+                      />
+                      {(provider === "gemini" ? geminiKey : openaiKey) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (provider === "gemini") {
+                              setGeminiKey("");
+                              saveAISettings({ geminiKey: "" });
+                            } else {
+                              setOpenaiKey("");
+                              saveAISettings({ openaiKey: "" });
+                            }
+                          }}
+                          className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-200 text-xs px-1.5 py-0.5 rounded hover:bg-slate-800"
+                          title="Clear key"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1.5">
+                      Your key is persisted securely in your local browser storage and never logged in the database.
+                    </p>
                   </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 mb-1.5">
                       Model
                     </label>
-                    <input
-                      type="text"
-                      value={model}
-                      onChange={(e) => {
-                        setModel(e.target.value);
-                        saveAISettings({ model: e.target.value });
-                      }}
-                      placeholder={
-                        provider === "gemini"
-                          ? "gemini-2.5-flash"
-                          : "gpt-4o-mini"
-                      }
-                      className="w-full bg-[#06080F] border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 font-mono focus:outline-none focus:border-sky-500 transition"
-                    />
+                    {provider === "gemini" ? (
+                      <select
+                        value={
+                          ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"].includes(model || "gemini-2.5-flash")
+                            ? model || "gemini-2.5-flash"
+                            : "custom"
+                        }
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === "custom") {
+                            setModel("");
+                            saveAISettings({ model: "" });
+                          } else {
+                            setModel(val);
+                            saveAISettings({ model: val });
+                          }
+                        }}
+                        className="w-full bg-[#06080F] border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-sky-500 transition"
+                      >
+                        <option value="gemini-2.5-flash">Gemini 2.5 Flash (Recommended: Fast & Intelligent)</option>
+                        <option value="gemini-2.5-pro">Gemini 2.5 Pro (Deep Reasoning & Analysis)</option>
+                        <option value="gemini-2.0-flash">Gemini 2.0 Flash (Fast Multimodal)</option>
+                        <option value="custom">Custom Model Identifier...</option>
+                      </select>
+                    ) : (
+                      <select
+                        value={
+                          ["gpt-4o-mini", "gpt-4o", "o3-mini"].includes(model || "gpt-4o-mini")
+                            ? model || "gpt-4o-mini"
+                            : "custom"
+                        }
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === "custom") {
+                            setModel("");
+                            saveAISettings({ model: "" });
+                          } else {
+                            setModel(val);
+                            saveAISettings({ model: val });
+                          }
+                        }}
+                        className="w-full bg-[#06080F] border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-sky-500 transition"
+                      >
+                        <option value="gpt-4o-mini">GPT-4o mini (Recommended: Fast & Efficient)</option>
+                        <option value="gpt-4o">GPT-4o (Flagship Omni)</option>
+                        <option value="o3-mini">o3-mini (Advanced Reasoning)</option>
+                        <option value="custom">Custom Model Identifier...</option>
+                      </select>
+                    )}
+
+                    {/* Show custom text input if custom selected */}
+                    {!["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash", "gpt-4o-mini", "gpt-4o", "o3-mini"].includes(model) && (
+                      <input
+                        type="text"
+                        value={model}
+                        onChange={(e) => {
+                          setModel(e.target.value);
+                          saveAISettings({ model: e.target.value });
+                        }}
+                        onBlur={() => saveAISettings()}
+                        placeholder={provider === "gemini" ? "e.g. gemini-2.5-flash" : "e.g. gpt-4o-mini"}
+                        className="w-full mt-2 bg-[#06080F] border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 font-mono focus:outline-none focus:border-sky-500 transition"
+                      />
+                    )}
                   </div>
                 </div>
               )}

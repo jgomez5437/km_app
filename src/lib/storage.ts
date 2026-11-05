@@ -5,6 +5,8 @@ const VAULT_STORAGE_KEY = "nexus_vault_notes_v3";
 const FOLDERS_STORAGE_KEY = "nexus_vault_folders_v3";
 const DELETED_NOTES_KEY = "nexus_vault_deleted_notes_v1";
 const DELETED_FOLDERS_KEY = "nexus_vault_deleted_folders_v1";
+const COLLAPSED_FOLDERS_KEY = "nexus_vault_collapsed_folders_v1";
+const COLLAPSED_NOTES_KEY = "nexus_vault_collapsed_notes_v1";
 
 let localMutationVersion = 0;
 let latestNotesSnapshot: Note[] = [];
@@ -179,6 +181,59 @@ export function createFolder(name: string): Folder {
     name,
     createdAt: Date.now(),
   };
+}
+
+// Tree Collapse Persistence
+export function loadCollapsedFolders(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = localStorage.getItem(COLLAPSED_FOLDERS_KEY);
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? new Set(parsed.filter((id) => typeof id === "string"))
+      : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+export function saveCollapsedFolders(collapsedIds: Set<string>): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(
+      COLLAPSED_FOLDERS_KEY,
+      JSON.stringify(Array.from(collapsedIds))
+    );
+  } catch (e) {
+    console.error("Failed to save collapsed folders to localStorage", e);
+  }
+}
+
+export function loadCollapsedNotes(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = localStorage.getItem(COLLAPSED_NOTES_KEY);
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? new Set(parsed.filter((id) => typeof id === "string"))
+      : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+export function saveCollapsedNotes(collapsedIds: Set<string>): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(
+      COLLAPSED_NOTES_KEY,
+      JSON.stringify(Array.from(collapsedIds))
+    );
+  } catch (e) {
+    console.error("Failed to save collapsed notes to localStorage", e);
+  }
 }
 
 // Notes Management

@@ -24,6 +24,7 @@ import {
   Quote,
   Sparkles,
   Wand2,
+  ChevronUp,
 } from "lucide-react";
 
 interface NexusEditorProps {
@@ -136,6 +137,32 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
   const lastEmittedMarkdownRef = useRef<string>(sanitizeCorruptedContent(initialContent));
   const currentNoteIdRef = useRef<string>(noteId);
   const [activeAIPanel, setActiveAIPanel] = useState<"ask" | "write" | null>(null);
+  const [isAIMenuOpen, setIsAIMenuOpen] = useState(false);
+  const aiMenuRef = useRef<HTMLDivElement | null>(null);
+
+  // Close floating AI menu when clicking outside or pressing Escape
+  useEffect(() => {
+    if (!isAIMenuOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (aiMenuRef.current && !aiMenuRef.current.contains(e.target as Node)) {
+        setIsAIMenuOpen(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsAIMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isAIMenuOpen]);
 
   const editor = useEditor({
     extensions: EDITOR_EXTENSIONS,
@@ -258,40 +285,98 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
 
       {/* 2. Formatting Toolbar Docked at the Bottom */}
       <div className="fixed bottom-0 inset-x-0 md:static shrink-0 z-20 px-3 sm:px-8 pt-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-[#0E1525]/95 backdrop-blur-md border-t border-slate-700/90 shadow-[0_-8px_24px_rgba(0,0,0,0.65)] flex items-center justify-between gap-3 text-slate-200">
-        <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-          {/* 1st Button: *icon* Ask AI */}
-          <button
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => setActiveAIPanel((prev) => (prev === "ask" ? null : "ask"))}
-            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition shrink-0 touch-manipulation ${
-              activeAIPanel === "ask"
-                ? "text-sky-200 bg-sky-950/90 border border-sky-600/80 shadow-xs shadow-sky-950/50"
-                : "text-sky-300 hover:text-white hover:bg-slate-800/90 bg-sky-950/30 border border-sky-800/40"
-            }`}
-            title="Ask AI about this article"
-          >
-            <Sparkles className="w-4 h-4 text-sky-400" />
-            <span>Ask AI</span>
-          </button>
+        <div className="flex items-center gap-1 sm:gap-1.5 min-w-0 flex-1">
+          {/* Unified AI Button with Floating Options Menu */}
+          <div className="relative shrink-0" ref={aiMenuRef}>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => setIsAIMenuOpen((prev) => !prev)}
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition shrink-0 touch-manipulation ${
+                isAIMenuOpen || activeAIPanel !== null
+                  ? "text-sky-200 bg-sky-950/90 border border-sky-600/80 shadow-xs shadow-sky-950/50"
+                  : "text-sky-300 hover:text-white hover:bg-slate-800/90 bg-sky-950/30 border border-sky-800/40"
+              }`}
+              title="AI Tools"
+            >
+              <Sparkles className="w-4 h-4 text-sky-400" />
+              <span>AI</span>
+              <ChevronUp
+                className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                  isAIMenuOpen ? "rotate-180 text-sky-300" : "text-slate-400"
+                }`}
+              />
+            </button>
 
-          {/* 2nd Button: *icon* Write with AI */}
-          <button
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => setActiveAIPanel((prev) => (prev === "write" ? null : "write"))}
-            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition shrink-0 touch-manipulation ${
-              activeAIPanel === "write"
-                ? "text-indigo-200 bg-indigo-950/90 border border-indigo-600/80 shadow-xs shadow-indigo-950/50"
-                : "text-indigo-300 hover:text-white hover:bg-slate-800/90 bg-indigo-950/30 border border-indigo-800/40"
-            }`}
-            title="Write with AI"
-          >
-            <Wand2 className="w-4 h-4 text-indigo-400" />
-            <span>Write with AI</span>
-          </button>
+            {/* Floating Options Menu */}
+            {isAIMenuOpen && (
+              <div className="absolute bottom-full left-0 mb-2.5 z-40 w-56 sm:w-60 p-1.5 bg-[#0B0F19]/95 backdrop-blur-xl border border-slate-700/80 rounded-xl shadow-[0_12px_36px_rgba(0,0,0,0.85)] flex flex-col gap-1 text-slate-200 animate-in fade-in slide-in-from-bottom-2 duration-150">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveAIPanel((prev) => (prev === "ask" ? null : "ask"));
+                    setIsAIMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition text-left ${
+                    activeAIPanel === "ask"
+                      ? "bg-sky-950/80 text-sky-200 border border-sky-800/60"
+                      : "hover:bg-[#162032] hover:text-white text-slate-200"
+                  }`}
+                >
+                  <div className="w-7 h-7 rounded-lg bg-sky-950/80 border border-sky-700/60 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-4 h-4 text-sky-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-semibold text-slate-100 flex items-center gap-1.5">
+                      <span>Ask AI</span>
+                      {activeAIPanel === "ask" && (
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-sky-900/60 text-sky-300">
+                          Active
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[11px] text-slate-400 truncate">
+                      Ask questions about this note
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveAIPanel((prev) => (prev === "write" ? null : "write"));
+                    setIsAIMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition text-left ${
+                    activeAIPanel === "write"
+                      ? "bg-indigo-950/80 text-indigo-200 border border-indigo-800/60"
+                      : "hover:bg-[#162032] hover:text-white text-slate-200"
+                  }`}
+                >
+                  <div className="w-7 h-7 rounded-lg bg-indigo-950/80 border border-indigo-700/60 flex items-center justify-center shrink-0">
+                    <Wand2 className="w-4 h-4 text-indigo-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-semibold text-slate-100 flex items-center gap-1.5">
+                      <span>Write with AI</span>
+                      {activeAIPanel === "write" && (
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-900/60 text-indigo-300">
+                          Active
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[11px] text-slate-400 truncate">
+                      Draft, outline, or expand text
+                    </div>
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
 
           <div className="w-[1px] h-5 bg-slate-700 mx-1 shrink-0" />
+
+          <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar py-0.5">
 
           <button
             type="button"
@@ -430,6 +515,7 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
             <Quote className="w-5 h-5" />
           </button>
         </div>
+      </div>
 
         {/* Word Count & Read Time Summary */}
         <div className="hidden sm:flex items-center gap-2 text-xs sm:text-sm text-slate-300 shrink-0 font-medium pl-3 border-l border-slate-700">

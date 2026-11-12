@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
+import { EditorState } from "@tiptap/pm/state";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -9,6 +10,7 @@ import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 import { Markdown } from "tiptap-markdown";
 import { sanitizeCorruptedContent } from "@/lib/storage";
+import { loadReadingFont, ReadingFont } from "@/lib/preferences";
 import { AskAIPanel } from "@/components/editor/AskAIPanel";
 import { WriteWithAIPanel } from "@/components/editor/WriteWithAIPanel";
 import {
@@ -139,6 +141,18 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
   const [activeAIPanel, setActiveAIPanel] = useState<"ask" | "write" | null>(null);
   const [isAIMenuOpen, setIsAIMenuOpen] = useState(false);
   const aiMenuRef = useRef<HTMLDivElement | null>(null);
+  const [readingFont, setReadingFont] = useState<ReadingFont>(() => loadReadingFont());
+
+  useEffect(() => {
+    const handleFontChange = (e: Event) => {
+      const customEvent = e as CustomEvent<ReadingFont>;
+      if (customEvent.detail) {
+        setReadingFont(customEvent.detail);
+      }
+    };
+    window.addEventListener("astro_pref_font_changed", handleFontChange);
+    return () => window.removeEventListener("astro_pref_font_changed", handleFontChange);
+  }, []);
 
   // Close floating AI menu when clicking outside or pressing Escape
   useEffect(() => {
@@ -180,6 +194,8 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
     },
   });
 
+  const titleInputRef = useRef<HTMLInputElement | null>(null);
+
   // Sync editor content if note switches or changes externally
   useEffect(() => {
     if (!editor) return;
@@ -190,6 +206,17 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
       currentNoteIdRef.current = noteId;
       lastEmittedMarkdownRef.current = sanitized;
       editor.commands.setContent(sanitized, { emitUpdate: false });
+      // Clear undo/redo history from previous note
+      try {
+        const cleanState = EditorState.create({
+          schema: editor.state.schema,
+          doc: editor.state.doc,
+          plugins: editor.state.plugins,
+        });
+        editor.view.updateState(cleanState);
+      } catch (err) {
+        console.warn("Could not reset history state:", err);
+      }
       return;
     }
 
@@ -242,14 +269,21 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
   return (
     <div className="flex-1 flex flex-col min-h-0 h-full w-full bg-[#06080F] text-slate-100 overflow-hidden relative">
       {/* 1. Main Editable Canvas (Title and Body now clean at the top) */}
-      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pb-24 md:pb-8">
+      <div className={`flex-1 min-h-0 overflow-y-auto custom-scrollbar pb-8 ${readingFont === "serif" ? "font-reading-serif" : ""}`}>
         <div className="max-w-4xl mx-auto px-5 sm:px-10 py-7 sm:py-10">
           {/* Main Canonical Title Input */}
           <div className="mb-6 sm:mb-8">
             <input
+              ref={titleInputRef}
               type="text"
               value={noteTitle}
               onChange={(e) => onUpdateTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  editor.commands.focus("start");
+                }
+              }}
               placeholder="Untitled Note"
               className="w-full text-3xl sm:text-4xl md:text-5xl font-extrabold bg-transparent text-white border-none focus:outline-none placeholder-slate-600 tracking-tight"
             />
@@ -284,7 +318,7 @@ export const NexusEditor: React.FC<NexusEditorProps> = ({
       )}
 
       {/* 2. Formatting Toolbar Docked at the Bottom */}
-      <div className="fixed bottom-0 inset-x-0 md:static shrink-0 z-20 px-3 sm:px-8 pt-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-[#0E1525]/95 backdrop-blur-md border-t border-slate-700/90 shadow-[0_-8px_24px_rgba(0,0,0,0.65)] flex items-center justify-between gap-3 text-slate-200">
+      <div className="shrink-0 z-20 px-3 sm:px-8 py-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] bg-[#0E1525]/95 backdrop-blur-md border-t border-slate-700/90 shadow-[0_-4px_16px_rgba(0,0,0,0.5)] flex items-center justify-between gap-3 text-slate-200">
         <div className="flex items-center gap-1 sm:gap-1.5 min-w-0 flex-1">
           {/* Unified AI Button with Floating Options Menu */}
           <div className="relative shrink-0" ref={aiMenuRef}>

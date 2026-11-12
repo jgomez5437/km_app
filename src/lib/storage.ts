@@ -7,6 +7,7 @@ const DELETED_NOTES_KEY = "nexus_vault_deleted_notes_v1";
 const DELETED_FOLDERS_KEY = "nexus_vault_deleted_folders_v1";
 const COLLAPSED_FOLDERS_KEY = "nexus_vault_collapsed_folders_v1";
 const COLLAPSED_NOTES_KEY = "nexus_vault_collapsed_notes_v1";
+const ACTIVE_NOTE_KEY = "nexus_vault_active_note_v1";
 
 let localMutationVersion = 0;
 let latestNotesSnapshot: Note[] = [];
@@ -30,9 +31,7 @@ function generateUniqueId(prefix: string, label: string): string {
 
 
 export const INITIAL_SAMPLE_FOLDERS: Folder[] = [
-  { id: "getting-started", name: "Getting Started", color: "#6366f1" },
-  { id: "architecture", name: "Architecture", color: "#38bdf8" },
-  { id: "ai-research", name: "AI & Research", color: "#10b981" },
+  { id: "getting-started", name: "Getting Started", color: "#38bdf8" },
 ];
 
 export const INITIAL_SAMPLE_NOTES: Note[] = [
@@ -40,77 +39,19 @@ export const INITIAL_SAMPLE_NOTES: Note[] = [
     id: "welcome-to-astro",
     title: "Welcome to Astro",
     folderId: "getting-started",
-    content: `**Astro** is a space-grade, local-first knowledge management vault engineered to combine the speed of block-based editors with deep intelligence and cloud sync.
+    content: `**Astro** is a cosmic, local-first knowledge base engineered for focused writing, deep research synthesis, and zero-latency capture.
 
-### Core Superpowers
-- **Folders & Subpages**: Organize your knowledge with clean, nested hierarchies.
-- **Local-First & Offline**: Notes are stored directly in your browser's local storage and synced with Neon PostgreSQL.
-- **AI Intelligence Layer**: Vault-wide semantic retrieval and automated synthesis.
+### Getting Around
+- **Create a Note**: Click the **+** button in the sidebar or top bar, or press **Alt+N** (or **Ctrl+N**).
+- **Folders & Subpages**: Organize thoughts with folders or nest subpages under any note using the **+** icon in the sidebar tree.
+- **AI Copilot**: Open the Copilot in the top right to ask questions across your vault, or use the **AI** tools in the bottom toolbar to draft and query this note.
+- **Cloud Sync**: Sign in to automatically back up your notes to Neon PostgreSQL and sync seamlessly across devices.
 
-### Quick Navigation
-- Use the sidebar on the left to explore folders and create subpages.
-- Use the **AI Copilot** in the top right to ask questions across your notes.`,
-    tags: ["overview", "guide"],
-    createdAt: Date.now() - 86400000 * 3,
-    updatedAt: Date.now() - 86400000 * 3,
+Your edits save instantly to your browser's local storage and synchronize whenever you're connected.`,
+    tags: ["welcome", "guide"],
+    createdAt: Date.now() - 3600000,
+    updatedAt: Date.now() - 3600000,
     pinned: true,
-  },
-  {
-    id: "quick-tips",
-    title: "Quick Tips & Shortcuts",
-    folderId: "getting-started",
-    parentId: "welcome-to-astro",
-    content: `Here are 3 quick actions to take right now:
-
-1. **Create a Note**: Click the **+** button in the sidebar or use the Command Palette.
-2. **Create a Subpage**: Click the **+** icon next to any note in the sidebar or at the bottom of this page.
-3. **Command Palette**: Press **Cmd+K** or **Ctrl+K** to search and navigate instantly.`,
-    tags: ["tips", "shortcuts"],
-    createdAt: Date.now() - 86400000 * 2,
-    updatedAt: Date.now() - 86400000 * 2,
-  },
-  {
-    id: "local-first-software",
-    title: "Local-First Software",
-    folderId: "architecture",
-    content: `Local-first software represents a paradigm shift from traditional cloud-only SaaS architectures.
-
-### Principles:
-1. **Zero-Latency Edits**: Read and write immediately to local storage without waiting on server roundtrips.
-2. **Offline-Capable**: Full functionality even during network drops or in airplane mode.
-3. **User Data Ownership**: Data belongs to you, never locked inside proprietary formats.
-4. **Seamless Synchronization**: Synchronizes with Neon serverless PostgreSQL when connected.`,
-    tags: ["architecture", "local-first"],
-    createdAt: Date.now() - 86400000 * 2,
-    updatedAt: Date.now() - 86400000 * 2,
-  },
-  {
-    id: "neon-cloud-sync",
-    title: "Neon Cloud Sync",
-    folderId: "architecture",
-    parentId: "local-first-software",
-    content: `Astro connects to **Neon Serverless PostgreSQL** for automatic multi-device synchronization.
-
-- Powered by Drizzle ORM and the \`@neondatabase/serverless\` driver.
-- Serverless architecture scales to zero when idle and wakes up with zero cold starts.
-- Optimistic Last-Write-Wins conflict resolution ensures your latest edits are always preserved.`,
-    tags: ["neon", "database", "postgres"],
-    createdAt: Date.now() - 86400000 * 1,
-    updatedAt: Date.now() - 86400000 * 1,
-  },
-  {
-    id: "ai-knowledge-assistant",
-    title: "AI Knowledge Assistant",
-    folderId: "ai-research",
-    content: `Your personal copilot for synthesizing research across your entire vault.
-
-### Capabilities:
-- Ask natural language questions across all your notes.
-- Summarize complex conceptual clusters.
-- Connects with **Ollama** for 100% private local execution, or OpenAI / Gemini via BYOK (Bring Your Own Key).`,
-    tags: ["ai", "assistant"],
-    createdAt: Date.now() - 3600000 * 12,
-    updatedAt: Date.now() - 3600000 * 12,
   },
 ];
 
@@ -139,7 +80,7 @@ export function loadFolders(): Folder[] {
     }
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) {
-      return INITIAL_SAMPLE_FOLDERS;
+      return [];
     }
     // Heal any duplicate folder IDs
     const seen = new Set<string>();
@@ -236,6 +177,46 @@ export function saveCollapsedNotes(collapsedIds: Set<string>): void {
   }
 }
 
+export function loadActiveNoteId(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return localStorage.getItem(ACTIVE_NOTE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function saveActiveNoteId(id: string | null): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (id) {
+      localStorage.setItem(ACTIVE_NOTE_KEY, id);
+    } else {
+      localStorage.removeItem(ACTIVE_NOTE_KEY);
+    }
+  } catch {
+    // ignore
+  }
+}
+
+export function clearLocalVault(): void {
+  if (typeof window === "undefined") return;
+  localMutationVersion++;
+  try {
+    localStorage.removeItem(VAULT_STORAGE_KEY);
+    localStorage.removeItem(FOLDERS_STORAGE_KEY);
+    localStorage.removeItem(DELETED_NOTES_KEY);
+    localStorage.removeItem(DELETED_FOLDERS_KEY);
+    localStorage.removeItem(COLLAPSED_FOLDERS_KEY);
+    localStorage.removeItem(COLLAPSED_NOTES_KEY);
+    localStorage.removeItem(ACTIVE_NOTE_KEY);
+  } catch (e) {
+    console.error("Failed to clear local vault from localStorage", e);
+  }
+  latestNotesSnapshot = [];
+  latestFoldersSnapshot = [];
+}
+
 // Notes Management
 export function loadNotes(): Note[] {
   if (typeof window === "undefined") return INITIAL_SAMPLE_NOTES;
@@ -247,8 +228,8 @@ export function loadNotes(): Note[] {
       return INITIAL_SAMPLE_NOTES;
     }
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      return INITIAL_SAMPLE_NOTES;
+    if (!Array.isArray(parsed)) {
+      return [];
     }
     // Heal any duplicate note IDs (e.g. multiple "untitled-note" entries)
     // and corrupted empty HTML content tags (e.g. "<p></p>")
@@ -285,7 +266,7 @@ export function loadNotes(): Note[] {
     return healed;
   } catch (e) {
     console.error("Failed to load notes from localStorage", e);
-    return INITIAL_SAMPLE_NOTES;
+    return [];
   }
 }
 
@@ -486,7 +467,7 @@ export async function syncWithCloud(
       let updatedNotes = currentNotes;
       let updatedFolders = currentFolders;
 
-      if (Array.isArray(data.notes) && data.notes.length > 0) {
+      if (Array.isArray(data.notes)) {
         saveNotes(data.notes, false);
         updatedNotes = data.notes;
       }

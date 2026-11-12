@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { loadAISettings, requestAI } from "@/lib/ai";
+import { Markdown } from "@/components/ui/Markdown";
 import {
   Wand2,
   X,
@@ -145,8 +146,13 @@ export const WriteWithAIPanel: React.FC<WriteWithAIPanelProps> = ({
   };
 
   return (
-    <div className="absolute bottom-16 left-3 sm:left-8 z-30 w-[calc(100vw-1.5rem)] sm:w-[500px] max-h-[560px] flex flex-col bg-[#0B0F19]/95 backdrop-blur-xl border border-slate-700/80 rounded-2xl shadow-[0_12px_36px_rgba(0,0,0,0.7)] text-slate-100 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-150">
-      {/* Header */}
+    <>
+      <div
+        className="fixed inset-0 bg-black/60 z-30 sm:hidden"
+        onClick={onDecline}
+      />
+      <div className="fixed sm:absolute bottom-0 sm:bottom-16 inset-x-0 sm:inset-x-auto sm:left-8 z-30 w-full sm:w-[520px] max-h-[82dvh] sm:max-h-[580px] flex flex-col bg-[#0B0F19]/98 sm:bg-[#0B0F19]/95 backdrop-blur-xl border-t sm:border border-slate-700/80 rounded-t-2xl sm:rounded-2xl shadow-2xl text-slate-100 overflow-hidden animate-in fade-in sm:zoom-in-95 duration-150 pb-[env(safe-area-inset-bottom)] sm:pb-0">
+        {/* Header */}
       <div className="px-4 py-3 bg-[#0E1525]/90 border-b border-slate-700/70 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           <div className="w-7 h-7 rounded-lg bg-indigo-950/80 border border-indigo-700/60 flex items-center justify-center shrink-0">
@@ -306,8 +312,12 @@ export const WriteWithAIPanel: React.FC<WriteWithAIPanelProps> = ({
                 placeholder="Edit draft markdown..."
               />
             ) : (
-              <div className="w-full bg-[#06080F] border border-slate-700/80 rounded-xl p-3 max-h-[220px] overflow-y-auto text-xs sm:text-[13px] text-slate-200 whitespace-pre-wrap leading-relaxed custom-scrollbar font-sans shadow-inner">
-                {draftContent || "(Draft is empty)"}
+              <div className="w-full bg-[#06080F] border border-slate-700/80 rounded-xl p-3 max-h-[220px] overflow-y-auto text-xs sm:text-[13px] text-slate-200 leading-relaxed custom-scrollbar font-sans shadow-inner">
+                {draftContent ? (
+                  <Markdown content={draftContent} />
+                ) : (
+                  <span className="text-slate-500 italic">(Draft is empty)</span>
+                )}
               </div>
             )}
 
@@ -419,5 +429,6 @@ export const WriteWithAIPanel: React.FC<WriteWithAIPanelProps> = ({
         )}
       </div>
     </div>
-  );
+  </>
+);
 };

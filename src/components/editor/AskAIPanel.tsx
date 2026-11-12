@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { loadAISettings, requestAI } from "@/lib/ai";
+import { Markdown } from "@/components/ui/Markdown";
 import {
   Sparkles,
   X,
@@ -94,10 +95,8 @@ export const AskAIPanel: React.FC<AskAIPanelProps> = ({
       const settings = loadAISettings(currentUserId);
       const content = getCurrentContent();
 
-      const formattedHistory = [
-        initialGreetingMessage,
-        ...nextMessages,
-      ].map((m) => ({
+      // Only send real user/assistant turns, excluding the client-only local greeting
+      const formattedHistory = nextMessages.map((m) => ({
         role: m.role,
         content: m.content,
       }));
@@ -138,163 +137,176 @@ export const AskAIPanel: React.FC<AskAIPanelProps> = ({
   };
 
   return (
-    <div className="absolute bottom-16 left-3 sm:left-8 z-30 w-[calc(100vw-1.5rem)] sm:w-[420px] max-h-[500px] flex flex-col bg-[#0B0F19]/95 backdrop-blur-xl border border-slate-700/80 rounded-2xl shadow-[0_12px_36px_rgba(0,0,0,0.7)] text-slate-100 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-150">
-      {/* Header */}
-      <div className="px-4 py-3 bg-[#0E1525]/90 border-b border-slate-700/70 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="w-7 h-7 rounded-lg bg-sky-950/80 border border-sky-700/60 flex items-center justify-center shrink-0">
-            <Sparkles className="w-4 h-4 text-sky-400" />
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="font-semibold text-sm text-white truncate">
-                Ask AI
-              </span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-950/60 border border-sky-800/60 text-sky-300 font-medium shrink-0">
-                This article only
-              </span>
+    <>
+      {/* Mobile backdrop */}
+      <div
+        className="fixed inset-0 bg-black/60 z-30 sm:hidden"
+        onClick={onClose}
+      />
+      <div className="fixed sm:absolute bottom-0 sm:bottom-16 inset-x-0 sm:inset-x-auto sm:left-8 z-30 w-full sm:w-[440px] max-h-[75dvh] sm:max-h-[520px] flex flex-col bg-[#0B0F19]/98 sm:bg-[#0B0F19]/95 backdrop-blur-xl border-t sm:border border-slate-700/80 rounded-t-2xl sm:rounded-2xl shadow-2xl text-slate-100 overflow-hidden animate-in fade-in sm:zoom-in-95 duration-150 pb-[env(safe-area-inset-bottom)] sm:pb-0">
+        {/* Header */}
+        <div className="px-4 py-3 bg-[#0E1525]/90 border-b border-slate-700/70 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-7 h-7 rounded-lg bg-sky-950/80 border border-sky-700/60 flex items-center justify-center shrink-0">
+              <Sparkles className="w-4 h-4 text-sky-400" />
             </div>
-            <p className="text-[11px] text-slate-400 truncate max-w-[240px]">
-              {displayTitle}
-            </p>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="font-semibold text-sm text-white truncate">
+                  Ask AI
+                </span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-950/60 border border-sky-800/60 text-sky-300 font-medium shrink-0">
+                  This note only
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 truncate max-w-[220px]">
+                {displayTitle}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={handleResetChat}
+              className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 rounded-lg transition"
+              title="Reset conversation"
+              aria-label="Reset conversation"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800/80 rounded-lg transition"
+              title="Close"
+              aria-label="Close panel"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={handleResetChat}
-            className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 rounded-lg transition"
-            title="Reset conversation"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800/80 rounded-lg transition"
-            title="Close"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-3.5 space-y-3 custom-scrollbar min-h-[220px] max-h-[340px]">
-        {allDisplayMessages.map((m) => (
-          <div
-            key={m.id}
-            className={`flex flex-col ${
-              m.role === "user" ? "items-end" : "items-start"
-            }`}
-          >
-            <div className="flex items-center gap-1.5 mb-1 px-1 text-[11px] text-slate-400">
-              {m.role === "user" ? (
-                <>
-                  <span>You</span>
-                  <UserIcon className="w-3 h-3 text-slate-400" />
-                </>
-              ) : (
-                <>
-                  <Bot className="w-3.5 h-3.5 text-sky-400" />
-                  <span className="font-medium text-slate-300">Astro AI</span>
-                </>
-              )}
-            </div>
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-3.5 space-y-3 custom-scrollbar min-h-[220px] max-h-[360px]">
+          {allDisplayMessages.map((m) => (
             <div
-              className={`max-w-[92%] px-3 py-2 rounded-xl text-xs sm:text-[13px] leading-relaxed whitespace-pre-wrap ${
-                m.role === "user"
-                  ? "bg-sky-950/80 text-sky-100 border border-sky-800/60 rounded-tr-xs shadow-xs"
-                  : "bg-[#06080F] text-slate-200 border border-slate-800/90 rounded-tl-xs shadow-md"
+              key={m.id}
+              className={`flex flex-col ${
+                m.role === "user" ? "items-end" : "items-start"
               }`}
             >
-              {m.content}
-            </div>
-          </div>
-        ))}
-
-        {isProcessing && (
-          <div className="flex items-center gap-2 p-2 bg-[#06080F] rounded-lg border border-slate-800/80 text-sky-400 text-xs w-fit">
-            <Sparkles className="w-3.5 h-3.5 animate-spin" />
-            <span>Analyzing this article...</span>
-          </div>
-        )}
-
-        {errorMessage && (
-          <div className="p-2.5 bg-red-950/40 border border-red-800/60 rounded-lg text-xs text-red-200 flex items-start gap-2">
-            <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <span>{errorMessage}</span>
-              {errorMessage.includes("API Key") && onOpenSettings && (
-                <button
-                  type="button"
-                  onClick={onOpenSettings}
-                  className="mt-1 flex items-center gap-1 text-sky-300 hover:underline font-semibold"
-                >
-                  <Settings className="w-3 h-3" />
-                  <span>Open AI Settings</span>
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Quick prompt suggestions if only greeting is present */}
-        {messages.length === 0 && !isProcessing && (
-          <div className="pt-1.5 space-y-1.5">
-            <span className="text-[10px] uppercase font-semibold text-slate-500 tracking-wider block px-1">
-              Suggestions
-            </span>
-            {[
-              "Summarize this article",
-              "What are the main takeaways?",
-              "Explain key concepts in simple terms",
-            ].map((preset) => (
-              <button
-                key={preset}
-                type="button"
-                onClick={() => handleSendMessage(preset)}
-                className="w-full text-left px-2.5 py-1.5 rounded-lg bg-[#06080F]/80 hover:bg-slate-800/80 border border-slate-800/80 text-slate-300 hover:text-white transition text-xs flex items-center justify-between group"
+              <div className="flex items-center gap-1.5 mb-1 px-1 text-[11px] text-slate-400">
+                {m.role === "user" ? (
+                  <>
+                    <span>You</span>
+                    <UserIcon className="w-3 h-3 text-slate-400" />
+                  </>
+                ) : (
+                  <>
+                    <Bot className="w-3.5 h-3.5 text-sky-400" />
+                    <span className="font-medium text-slate-300">Astro AI</span>
+                  </>
+                )}
+              </div>
+              <div
+                className={`max-w-[92%] px-3 py-2 rounded-xl text-xs sm:text-[13px] leading-relaxed ${
+                  m.role === "user"
+                    ? "bg-sky-950/80 text-sky-100 border border-sky-800/60 rounded-tr-xs shadow-xs whitespace-pre-wrap"
+                    : "bg-[#06080F] text-slate-200 border border-slate-800/90 rounded-tl-xs shadow-md"
+                }`}
               >
-                <span className="truncate">{preset}</span>
-                <ArrowRight className="w-3 h-3 text-slate-500 group-hover:text-sky-400 shrink-0 ml-1.5" />
-              </button>
-            ))}
-          </div>
-        )}
+                {m.role === "assistant" ? (
+                  <Markdown content={m.content} />
+                ) : (
+                  m.content
+                )}
+              </div>
+            </div>
+          ))}
 
-        <div ref={messagesEndRef} />
-      </div>
+          {isProcessing && (
+            <div className="flex items-center gap-2 p-2 bg-[#06080F] rounded-lg border border-slate-800/80 text-sky-400 text-xs w-fit">
+              <Sparkles className="w-3.5 h-3.5 animate-spin" />
+              <span>Analyzing this note...</span>
+            </div>
+          )}
 
-      {/* Input Form */}
-      <div className="p-2.5 border-t border-slate-700/70 bg-[#0E1525]/70 shrink-0">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSendMessage();
-          }}
-          className="flex items-center gap-1.5 bg-[#06080F] p-1.5 rounded-xl border border-slate-700/80 focus-within:border-sky-500/80 transition"
-        >
-          <input
-            ref={inputRef}
-            type="text"
-            placeholder="Ask anything about this article..."
-            value={inputQuery}
-            onChange={(e) => setInputQuery(e.target.value)}
-            disabled={isProcessing}
-            className="flex-1 bg-transparent border-none text-slate-100 text-xs sm:text-sm px-2 focus:outline-none placeholder-slate-500 disabled:opacity-50"
-          />
-          <button
-            type="submit"
-            disabled={!inputQuery.trim() || isProcessing}
-            className="p-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 disabled:opacity-40 text-white transition disabled:hover:bg-sky-600"
-            title="Send"
+          {errorMessage && (
+            <div className="p-2.5 bg-red-950/40 border border-red-800/60 rounded-lg text-xs text-red-200 flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <span>{errorMessage}</span>
+                {errorMessage.includes("API Key") && onOpenSettings && (
+                  <button
+                    type="button"
+                    onClick={onOpenSettings}
+                    className="mt-1 flex items-center gap-1 text-sky-300 hover:underline font-semibold"
+                  >
+                    <Settings className="w-3 h-3" />
+                    <span>Open AI Settings</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {messages.length === 0 && !isProcessing && (
+            <div className="pt-1.5 space-y-1.5">
+              <span className="text-[10px] uppercase font-semibold text-slate-500 tracking-wider block px-1">
+                Suggestions
+              </span>
+              {[
+                "Summarize this note",
+                "What are the main takeaways?",
+                "Suggest 3 improvements",
+              ].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => handleSendMessage(preset)}
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg bg-[#06080F]/80 hover:bg-slate-800/80 border border-slate-800/80 text-slate-300 hover:text-white transition text-xs flex items-center justify-between group"
+                >
+                  <span className="truncate">{preset}</span>
+                  <ArrowRight className="w-3 h-3 text-slate-500 group-hover:text-sky-400 shrink-0 ml-1.5" />
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input Form */}
+        <div className="p-2.5 border-t border-slate-700/70 bg-[#0E1525]/70 shrink-0">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSendMessage();
+            }}
+            className="flex items-center gap-1.5 bg-[#06080F] p-1.5 rounded-xl border border-slate-700/80 focus-within:border-sky-500/80 transition"
           >
-            <Send className="w-3.5 h-3.5" />
-          </button>
-        </form>
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder="Ask anything about this note..."
+              value={inputQuery}
+              onChange={(e) => setInputQuery(e.target.value)}
+              disabled={isProcessing}
+              className="flex-1 bg-transparent border-none text-slate-100 text-base sm:text-sm px-2 focus:outline-none placeholder-slate-500 disabled:opacity-50"
+            />
+            <button
+              type="submit"
+              disabled={!inputQuery.trim() || isProcessing}
+              className="p-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 disabled:opacity-40 text-white transition disabled:hover:bg-sky-600"
+              title="Send"
+              aria-label="Send query"
+            >
+              <Send className="w-3.5 h-3.5" />
+            </button>
+          </form>
+        </div>
       </div>
-    </div>
+    </>
   );
 };

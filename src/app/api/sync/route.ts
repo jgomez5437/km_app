@@ -97,10 +97,14 @@ export async function POST(req: Request) {
         });
       }
 
-      if (folderRows.length > 0) {
+      const deduplicatedFolderRows = Array.from(
+        folderRows.reduce((map, row) => map.set(row.id, row), new Map<string, (typeof folderRows)[0]>()).values()
+      );
+
+      if (deduplicatedFolderRows.length > 0) {
         await db
           .insert(folders)
-          .values(folderRows)
+          .values(deduplicatedFolderRows)
           .onConflictDoUpdate({
             target: folders.id,
             set: {
@@ -176,10 +180,20 @@ export async function POST(req: Request) {
         };
       });
 
-      if (noteRows.length > 0) {
+      const deduplicatedNoteRows = Array.from(
+        noteRows.reduce((map, row) => {
+          const existing = map.get(row.id);
+          if (!existing || row.updatedAt >= existing.updatedAt) {
+            map.set(row.id, row);
+          }
+          return map;
+        }, new Map<string, (typeof noteRows)[0]>()).values()
+      );
+
+      if (deduplicatedNoteRows.length > 0) {
         await db
           .insert(notes)
-          .values(noteRows)
+          .values(deduplicatedNoteRows)
           .onConflictDoUpdate({
             target: notes.id,
             set: {

@@ -251,7 +251,10 @@ export const NexusWorkbench: React.FC = () => {
     setIsCloudConfigured(true);
     setSyncStatus("syncing");
     toast.success(`Welcome back, ${user.name || user.email}!`);
-    const res = await syncWithCloud(notes, folders);
+    const isSampleVault =
+      notes.length === 0 ||
+      (notes.length === 1 && notes[0].id === "note-welcome-astro");
+    const res = await syncWithCloud(notes, folders, { pullOnly: isSampleVault });
     if (res.isCloud) {
       setNotes(res.notes);
       setFolders(res.folders);

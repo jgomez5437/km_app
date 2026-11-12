@@ -53,7 +53,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Authentication failed. Please try again.");
+        const message = data.details
+          ? `${data.error}: ${data.details}`
+          : data.error || "Authentication failed. Please try again.";
+        throw new Error(message);
       }
 
       if (data.user) {

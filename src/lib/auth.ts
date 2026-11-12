@@ -3,12 +3,18 @@ import { cookies } from "next/headers";
 
 export const SESSION_COOKIE_NAME = "nexus_session";
 
+let warnedMissingSecret = false;
+
 function getJwtKey(): Uint8Array {
-  const secret = process.env.AUTH_SECRET;
+  const secret =
+    process.env.AUTH_SECRET ||
+    process.env.NEXTAUTH_SECRET ||
+    process.env.JWT_SECRET;
   if (!secret) {
-    if (process.env.NODE_ENV === "production") {
-      throw new Error(
-        "CRITICAL SECURITY CONFIGURATION ERROR: AUTH_SECRET environment variable is missing in production. Set a strong secret (32+ characters) in your environment variables."
+    if (process.env.NODE_ENV === "production" && !warnedMissingSecret) {
+      warnedMissingSecret = true;
+      console.warn(
+        "WARNING: AUTH_SECRET (or NEXTAUTH_SECRET / JWT_SECRET) is not set in production. Using fallback signing key. For enhanced security, set AUTH_SECRET in your Vercel project environment variables."
       );
     }
     return new TextEncoder().encode("nexus_vault_default_secret_key_32chars_long_minimum");

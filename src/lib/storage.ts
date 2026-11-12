@@ -124,6 +124,20 @@ export function createFolder(name: string): Folder {
   };
 }
 
+export function renameFolderInVault(
+  folderId: string,
+  newName: string,
+  folders: Folder[]
+): Folder[] {
+  const trimmed = newName.trim();
+  if (!trimmed) return folders;
+  const nextFolders = folders.map((f) =>
+    f.id === folderId ? { ...f, name: trimmed } : f
+  );
+  saveFolders(nextFolders);
+  return nextFolders;
+}
+
 // Tree Collapse Persistence
 export function loadCollapsedFolders(): Set<string> {
   if (typeof window === "undefined") return new Set();
@@ -326,6 +340,30 @@ export function createNewNote(
     createdAt: now,
     updatedAt: now,
   };
+}
+
+export function duplicateNoteInVault(
+  noteId: string,
+  notes: Note[]
+): { notes: Note[]; duplicatedNote: Note | null } {
+  const source = notes.find((n) => n.id === noteId);
+  if (!source) return { notes, duplicatedNote: null };
+
+  const now = Date.now();
+  const baseTitle = source.title.trim() || "Untitled Note";
+  const copyTitle = `${baseTitle} (Copy)`;
+  const duplicatedNote: Note = {
+    ...source,
+    id: generateUniqueId("note", copyTitle),
+    title: copyTitle,
+    pinned: false,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  const nextNotes = [duplicatedNote, ...notes];
+  saveNotes(nextNotes);
+  return { notes: nextNotes, duplicatedNote };
 }
 
 // Pending Deletions Queue for Cloud Sync

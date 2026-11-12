@@ -8,21 +8,34 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-serif: var(--font-source-serif), Georgia, serif;
+  --font-mono: var(--font-jetbrains-mono), Menlo, Monaco, Consolas, monospace;
 }
 
 body {
   background: var(--background);
-  background-image: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(56, 189, 248, 0.05), transparent 70%);
+  background-image: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(56, 189, 248, 0.06), transparent 70%);
   color: var(--foreground);
-  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
   margin: 0;
   padding: 0;
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom scrollbars */
+::selection {
+  background: rgba(56, 189, 248, 0.28);
+  color: #ffffff;
+}
+
+/* Custom scrollbars (WebKit and Firefox standard) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1E293B transparent;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -34,11 +47,66 @@ body {
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: #1E293B;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #334155;
+}
+
+/* Hide scrollbars for horizontal toolbars */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Standard animation keyframes */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes sheetUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 150ms ease-out forwards;
+}
+
+.animate-pop-in {
+  animation: popIn 180ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 180ms ease-out forwards;
+}
+
+.animate-sheet-up {
+  animation: sheetUp 220ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* TipTap Editor Styles */
@@ -46,8 +114,12 @@ body {
   outline: none;
 }
 
+.font-reading-serif .tiptap {
+  font-family: var(--font-serif);
+}
+
 .tiptap p.is-editor-empty:first-child::before {
-  color: #484f58;
+  color: #64748b;
   content: attr(data-placeholder);
   float: left;
   height: 0;
@@ -62,14 +134,14 @@ body {
 .tiptap ul[data-type="taskList"] li {
   display: flex;
   align-items: flex-start;
-  gap: 0.5rem;
-  margin: 0.25rem 0;
+  gap: 0.65rem;
+  margin: 0.35rem 0;
 }
 
 .tiptap ul[data-type="taskList"] li > label {
   user-select: none;
   cursor: pointer;
-  margin-top: 0.2rem;
+  margin-top: 0.25rem;
 }
 
 .tiptap ul[data-type="taskList"] li > label input[type="checkbox"] {
@@ -77,6 +149,7 @@ body {
   cursor: pointer;
   width: 1.15rem;
   height: 1.15rem;
+  border-radius: 4px;
 }
 
 .tiptap ul[data-type="taskList"] li > div {
@@ -90,11 +163,6 @@ body {
   min-height: 1.5rem;
 }
 
-.tiptap li > p {
-  margin-top: 0.15rem;
-  margin-bottom: 0.15rem;
-}
-
 .tiptap ul[data-type="taskList"] li[data-checked="true"] > div {
   text-decoration: line-through;
   opacity: 0.55;
@@ -106,14 +174,15 @@ body {
   color: #94a3b8;
   font-style: italic;
   font-size: 1.05rem;
+  margin: 1rem 0;
 }
 
 .tiptap code {
   background: #0E1424;
   color: #38bdf8;
   padding: 0.2rem 0.4rem;
-  border-radius: 0.3rem;
-  font-family: var(--font-mono), monospace;
+  border-radius: 0.35rem;
+  font-family: var(--font-mono);
   font-size: 0.9em;
   border: 1px solid #1E293B;
 }
@@ -121,38 +190,41 @@ body {
 .tiptap pre {
   background: #0A0F1D;
   color: #f1f5f9;
-  padding: 0.85rem 1.15rem;
-  border-radius: 0.6rem;
+  padding: 0.9rem 1.2rem;
+  border-radius: 0.65rem;
   border: 1px solid #1E293B;
   overflow-x: auto;
   margin: 1.25rem 0;
-  font-family: var(--font-mono), monospace;
-  font-size: 0.95rem;
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+  line-height: 1.6;
 }
 
-/* Obsidian-Style Markdown Typography (Scaled up for comfortable reading) */
+/* Editor Markdown Typography */
 .tiptap h1 {
   font-size: 2.15rem;
-  font-weight: 700;
+  font-weight: 750;
   color: #ffffff;
   margin-top: 2rem;
   margin-bottom: 0.85rem;
   line-height: 1.25;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   padding-bottom: 0.45rem;
+  letter-spacing: -0.025em;
 }
 
 .tiptap h2 {
-  font-size: 1.65rem;
-  font-weight: 600;
+  font-size: 1.6rem;
+  font-weight: 650;
   color: #f3f4f6;
   margin-top: 1.75rem;
   margin-bottom: 0.75rem;
   line-height: 1.3;
+  letter-spacing: -0.015em;
 }
 
 .tiptap h3 {
-  font-size: 1.35rem;
+  font-size: 1.3rem;
   font-weight: 600;
   color: #e5e7eb;
   margin-top: 1.5rem;
@@ -183,47 +255,101 @@ body {
 }
 
 .tiptap li {
-  margin-top: 0.4rem;
-  margin-bottom: 0.4rem;
+  margin-top: 0.35rem;
+  margin-bottom: 0.35rem;
   line-height: 1.7;
   color: #d1d5db;
-  font-size: 1.05rem;
-}
-
-.tiptap strong {
-  font-weight: 600;
-  color: #ffffff;
-}
-
-.tiptap em {
-  font-style: italic;
-  color: #cbd5e1;
 }
 
 .tiptap hr {
   border: none;
-  border-top: 1px solid #30363d;
+  border-top: 1px solid #1E293B;
   margin: 1.75rem 0;
 }
 
 .tiptap a {
-  color: #c084fc;
+  color: #38bdf8;
   text-decoration: underline;
   text-underline-offset: 2px;
-  transition: color 0.15s ease;
 }
 
-.tiptap a:hover {
-  color: #e9d5ff;
+/* AI Markdown rendering styles */
+.astro-markdown-content {
+  font-size: 0.88rem;
+  line-height: 1.65;
+  color: #e2e8f0;
 }
 
-/* Hide scrollbars for mobile horizontal toolbars */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+.astro-markdown-content h1,
+.astro-markdown-content h2,
+.astro-markdown-content h3 {
+  color: #ffffff;
+  font-weight: 600;
+  margin-top: 0.85rem;
+  margin-bottom: 0.35rem;
 }
 
+.astro-markdown-content h1 { font-size: 1.15rem; }
+.astro-markdown-content h2 { font-size: 1.02rem; }
+.astro-markdown-content h3 { font-size: 0.95rem; }
 
+.astro-markdown-content p {
+  margin: 0.45rem 0;
+}
+
+.astro-markdown-content ul {
+  list-style-type: disc;
+  padding-left: 1.25rem;
+  margin: 0.45rem 0;
+}
+
+.astro-markdown-content ol {
+  list-style-type: decimal;
+  padding-left: 1.25rem;
+  margin: 0.45rem 0;
+}
+
+.astro-markdown-content li {
+  margin: 0.2rem 0;
+}
+
+.astro-markdown-content code {
+  background: #0E1424;
+  color: #38bdf8;
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.3rem;
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  border: 1px solid #1E293B;
+}
+
+.astro-markdown-content pre {
+  background: #06080F;
+  color: #f1f5f9;
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.5rem;
+  border: 1px solid #1E293B;
+  overflow-x: auto;
+  margin: 0.65rem 0;
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+}
+
+.astro-markdown-content blockquote {
+  border-left: 2px solid #38bdf8;
+  padding-left: 0.75rem;
+  color: #94a3b8;
+  font-style: italic;
+  margin: 0.5rem 0;
+}
+
+.astro-markdown-content strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.astro-markdown-content a {
+  color: #38bdf8;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

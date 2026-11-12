@@ -79,6 +79,7 @@ export async function POST(req: Request) {
           .map((f) => f.id)
       );
 
+      const folderRows = [];
       for (const folder of activeClientFolders) {
         const safeFolderId = foreignFolderIds.has(folder.id)
           ? `${folder.id}_${userId}`
@@ -86,17 +87,20 @@ export async function POST(req: Request) {
         if (safeFolderId !== folder.id) {
           folderIdMap.set(folder.id, safeFolderId);
         }
+        folderRows.push({
+          id: safeFolderId,
+          userId,
+          name: folder.name,
+          color: folder.color || null,
+          createdAt: folder.createdAt ? new Date(folder.createdAt) : new Date(),
+          updatedAt: new Date(),
+        });
+      }
 
+      if (folderRows.length > 0) {
         await db
           .insert(folders)
-          .values({
-            id: safeFolderId,
-            userId,
-            name: folder.name,
-            color: folder.color || null,
-            createdAt: folder.createdAt ? new Date(folder.createdAt) : new Date(),
-            updatedAt: new Date(),
-          })
+          .values(folderRows)
           .onConflictDoUpdate({
             target: folders.id,
             set: {
@@ -143,7 +147,7 @@ export async function POST(req: Request) {
         }
       }
 
-      for (const note of activeClientNotes) {
+      const noteRows = activeClientNotes.map((note) => {
         const safeNoteId = noteIdMap.get(note.id) || note.id;
         const rawFolderId = note.folderId
           ? folderIdMap.get(note.folderId) || note.folderId
@@ -158,20 +162,24 @@ export async function POST(req: Request) {
             ? note.tags
             : extractTags(note.content || "");
 
+        return {
+          id: safeNoteId,
+          userId,
+          title: typeof note.title === "string" ? note.title : "",
+          content: note.content ?? "",
+          folderId: safeFolderId,
+          parentId: safeParentId,
+          tags: computedTags,
+          pinned: Boolean(note.pinned),
+          createdAt: Number(note.createdAt) || Date.now(),
+          updatedAt: Number(note.updatedAt) || Date.now(),
+        };
+      });
+
+      if (noteRows.length > 0) {
         await db
           .insert(notes)
-          .values({
-            id: safeNoteId,
-            userId,
-            title: note.title || "Untitled Note",
-            content: note.content ?? "",
-            folderId: safeFolderId,
-            parentId: safeParentId,
-            tags: computedTags,
-            pinned: Boolean(note.pinned),
-            createdAt: Number(note.createdAt) || Date.now(),
-            updatedAt: Number(note.updatedAt) || Date.now(),
-          })
+          .values(noteRows)
           .onConflictDoUpdate({
             target: notes.id,
             set: {

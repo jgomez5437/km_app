@@ -25,7 +25,7 @@ export async function POST(req: Request) {
       );
     }
 
-    if (provider !== "local-ollama" && (!apiKey || typeof apiKey !== "string" || !apiKey.trim())) {
+    if (!apiKey || typeof apiKey !== "string" || !apiKey.trim()) {
       return NextResponse.json(
         {
           error: `Please provide an API key for ${provider === "gemini" ? "Google Gemini" : "OpenAI"} in Settings.`,
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const cleanKey = apiKey ? apiKey.trim() : "";
+    const cleanKey = apiKey.trim();
 
     let systemPrompt = "";
 
@@ -116,10 +116,13 @@ Instructions:
 
       const tryGenerate = async (mName: string) => {
         const cleanModel = mName.replace(/^models\//, "");
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${cleanModel}:generateContent?key=${cleanKey}`;
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${cleanModel}:generateContent`;
         const res = await fetch(endpoint, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": cleanKey,
+          },
           body: JSON.stringify(geminiPayload),
         });
         const data = await res.json();
@@ -133,7 +136,10 @@ Instructions:
         console.warn(`Gemini model ${targetModel} not found. Querying available models from Gemini API...`);
         try {
           const listRes = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models?key=${cleanKey}`
+            `https://generativelanguage.googleapis.com/v1beta/models`,
+            {
+              headers: { "x-goog-api-key": cleanKey },
+            }
           );
           if (listRes.ok) {
             const listData = await listRes.json();

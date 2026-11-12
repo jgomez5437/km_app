@@ -3,15 +3,18 @@ import { cookies } from "next/headers";
 
 export const SESSION_COOKIE_NAME = "nexus_session";
 
-if (!process.env.AUTH_SECRET && process.env.NODE_ENV === "production") {
-  console.warn(
-    "WARNING: AUTH_SECRET environment variable is not set in production. Set a strong 32+ character secret."
-  );
+function getJwtKey(): Uint8Array {
+  const secret = process.env.AUTH_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "CRITICAL SECURITY CONFIGURATION ERROR: AUTH_SECRET environment variable is missing in production. Set a strong secret (32+ characters) in your environment variables."
+      );
+    }
+    return new TextEncoder().encode("nexus_vault_default_secret_key_32chars_long_minimum");
+  }
+  return new TextEncoder().encode(secret);
 }
-
-const JWT_SECRET =
-  process.env.AUTH_SECRET || "nexus_vault_default_secret_key_32chars_long_minimum";
-const key = new TextEncoder().encode(JWT_SECRET);
 
 export interface AuthSessionPayload {
   userId: string;
@@ -23,6 +26,7 @@ export interface AuthSessionPayload {
  * Creates a signed JWT session token valid for 30 days
  */
 export async function createSessionToken(payload: AuthSessionPayload): Promise<string> {
+  const key = getJwtKey();
   return await new SignJWT({ ...payload })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -35,6 +39,7 @@ export async function createSessionToken(payload: AuthSessionPayload): Promise<s
  */
 export async function verifySessionToken(token: string): Promise<AuthSessionPayload | null> {
   try {
+    const key = getJwtKey();
     const { payload } = await jwtVerify(token, key, {
       algorithms: ["HS256"],
     });

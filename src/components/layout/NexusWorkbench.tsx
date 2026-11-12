@@ -10,6 +10,8 @@ import {
   loadFolders,
   saveFolders,
   createFolder,
+  renameFolderInVault,
+  duplicateNoteInVault,
   recordDeletedNotes,
   recordDeletedFolders,
   loadCollapsedFolders,
@@ -25,6 +27,7 @@ import {
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/TopBar";
 import { EmptyVault } from "@/components/layout/EmptyVault";
+import { CommandPalette } from "@/components/layout/CommandPalette";
 import { NexusEditor } from "@/components/editor/NexusEditor";
 import { NexusAIAssistant } from "@/components/ai/NexusAIAssistant";
 import { UserSettingsModal } from "@/components/settings/UserSettingsModal";
@@ -68,6 +71,7 @@ export const NexusWorkbench: React.FC = () => {
   const [isCloudConfigured, setIsCloudConfigured] = useState(false);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
   // Tree collapse state
   const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(() =>
@@ -317,13 +321,19 @@ export const NexusWorkbench: React.FC = () => {
     [notes, folders, triggerSync]
   );
 
-  // Global Alt+N and Ctrl/Cmd+N shortcut listeners
+  // Global Alt+N, Ctrl/Cmd+N, Ctrl/Cmd+K (Command Palette), and Ctrl/Cmd+\ (Sidebar) shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const isN = e.key.toLowerCase() === "n";
-      if ((e.altKey && isN) || ((e.ctrlKey || e.metaKey) && isN)) {
+      const key = e.key.toLowerCase();
+      if ((e.altKey && key === "n") || ((e.ctrlKey || e.metaKey) && key === "n")) {
         e.preventDefault();
         handleCreateNewNote();
+      } else if ((e.ctrlKey || e.metaKey) && key === "k") {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
+      } else if ((e.ctrlKey || e.metaKey) && e.key === "\\") {
+        e.preventDefault();
+        setIsSidebarOpen((prev) => !prev);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -337,6 +347,12 @@ export const NexusWorkbench: React.FC = () => {
     saveFolders(nextFolders);
     triggerSync(notes, nextFolders);
     toast.success(`Folder "${name}" created.`);
+  };
+
+  const handleRenameFolder = (folderId: string, newName: string) => {
+    const nextFolders = renameFolderInVault(folderId, newName, folders);
+    setFolders(nextFolders);
+    triggerSync(notes, nextFolders);
   };
 
   const handleDeleteFolder = (folderId: string, e: React.MouseEvent) => {
@@ -479,6 +495,55 @@ export const NexusWorkbench: React.FC = () => {
     setIsUserSettingsOpen(true);
   };
 
+  const handleTogglePinNote = (noteId: string) => {
+    const target = notes.find((n) => n.id === noteId);
+    if (!target) return;
+    const nextPinned = !target.pinned;
+    const updated = updateNoteInVault({ id: noteId, pinned: nextPinned }, notes);
+    setNotes(updated);
+    triggerSync(updated, folders);
+    toast.info(nextPinned ? "Note pinned." : "Note unpinned.");
+  };
+
+  const handleMoveNoteToFolder = (noteId: string, folderId: string | undefined) => {
+    const updated = updateNoteInVault({ id: noteId, folderId }, notes);
+    setNotes(updated);
+    if (folderId) {
+      setCollapsedFolders((prev) => {
+        const next = new Set(prev);
+        next.delete(folderId);
+        saveCollapsedFolders(next);
+        return next;
+      });
+    }
+    triggerSync(updated, folders);
+    const folderName = folderId
+      ? folders.find((f) => f.id === folderId)?.name || "folder"
+      : "Unfiled";
+    toast.info(`Moved note to ${folderName}.`);
+  };
+
+  const handleDuplicateNote = (noteId: string) => {
+    const { notes: updated, duplicatedNote } = duplicateNoteInVault(noteId, notes);
+    if (!duplicatedNote) return;
+    setNotes(updated);
+    setActiveNoteId(duplicatedNote.id);
+    triggerSync(updated, folders);
+    toast.success("Note duplicated.");
+  };
+
+  const handleCopyMarkdown = async (note: Note) => {
+    try {
+      const md = note.title.trim()
+        ? `# ${note.title.trim()}\n\n${note.content}`
+        : note.content;
+      await navigator.clipboard.writeText(md);
+      toast.success("Markdown copied to clipboard.");
+    } catch {
+      toast.error("Could not copy to clipboard.");
+    }
+  };
+
   return (
     <div className="flex h-dvh w-full bg-[#06080F] text-slate-100 overflow-hidden font-sans relative">
       {/* 1. Left Sidebar Navigation */}
@@ -491,8 +556,12 @@ export const NexusWorkbench: React.FC = () => {
         onSelectNote={(id) => setActiveNoteId(id)}
         onCreateNote={handleCreateNewNote}
         onCreateFolder={handleCreateFolder}
+        onRenameFolder={handleRenameFolder}
         onDeleteNote={handleDeleteNote}
         onDeleteFolder={handleDeleteFolder}
+        onTogglePinNote={handleTogglePinNote}
+        onDuplicateNote={handleDuplicateNote}
+        onMoveNoteToFolder={handleMoveNoteToFolder}
         collapsedFolders={collapsedFolders}
         onToggleFolderCollapse={toggleFolderCollapse}
         collapsedNotes={collapsedNotes}
@@ -513,6 +582,7 @@ export const NexusWorkbench: React.FC = () => {
         {/* Top Header Bar */}
         <TopBar
           activeNote={activeNote}
+          folders={folders}
           breadcrumbs={breadcrumbs}
           isSidebarOpen={isSidebarOpen}
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -522,9 +592,14 @@ export const NexusWorkbench: React.FC = () => {
           isCloudConfigured={isCloudConfigured}
           currentUser={currentUser}
           onManualSync={handleManualSync}
-          onCreateNote={() => handleCreateNewNote()}
+          onCreateNote={handleCreateNewNote}
           onDeleteNote={handleDeleteNote}
           onSelectNote={(id) => setActiveNoteId(id)}
+          onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+          onTogglePinNote={handleTogglePinNote}
+          onMoveNoteToFolder={handleMoveNoteToFolder}
+          onDuplicateNote={handleDuplicateNote}
+          onCopyMarkdown={handleCopyMarkdown}
         />
 
         {/* View Container */}
@@ -537,14 +612,24 @@ export const NexusWorkbench: React.FC = () => {
                   noteId={activeNote.id}
                   initialContent={activeNote.content}
                   noteTitle={activeNote.title}
+                  folderId={activeNote.folderId}
+                  folders={folders}
+                  tags={activeNote.tags}
+                  updatedAt={activeNote.updatedAt}
                   onUpdateTitle={handleUpdateTitle}
                   onUpdateContent={handleUpdateContent}
+                  onMoveToFolder={(targetFolderId) =>
+                    handleMoveNoteToFolder(activeNote.id, targetFolderId)
+                  }
                   currentUserId={currentUser?.id}
                   onOpenAISettings={handleOpenAISettings}
                 />
               </div>
             ) : (
-              <EmptyVault onCreateNote={() => handleCreateNewNote()} />
+              <EmptyVault
+                onCreateNote={() => handleCreateNewNote()}
+                onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+              />
             )}
           </div>
 
@@ -619,6 +704,25 @@ export const NexusWorkbench: React.FC = () => {
         showCancel={confirmDialog.showCancel}
         onConfirm={confirmDialog.onConfirm}
         onCancel={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
+      />
+
+      {/* 7. Command Palette (Cmd/Ctrl + K) */}
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        notes={notes}
+        folders={folders}
+        activeNote={activeNote}
+        onSelectNote={(id) => setActiveNoteId(id)}
+        onCreateNote={(title) => handleCreateNewNote(title)}
+        onTogglePinNote={handleTogglePinNote}
+        onToggleRightDrawer={() => setIsRightDrawerOpen((prev) => !prev)}
+        onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
+        onOpenSettings={(tab) => {
+          if (tab) setUserSettingsTab(tab);
+          setIsUserSettingsOpen(true);
+        }}
+        onManualSync={handleManualSync}
       />
     </div>
   );

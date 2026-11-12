@@ -151,7 +151,7 @@ export const WriteWithAIPanel: React.FC<WriteWithAIPanelProps> = ({
         className="fixed inset-0 bg-black/60 z-30 sm:hidden"
         onClick={onDecline}
       />
-      <div className="fixed sm:absolute bottom-0 sm:bottom-16 inset-x-0 sm:inset-x-auto sm:left-8 z-30 w-full sm:w-[520px] max-h-[82dvh] sm:max-h-[580px] flex flex-col bg-[#0B0F19]/98 sm:bg-[#0B0F19]/95 backdrop-blur-xl border-t sm:border border-slate-700/80 rounded-t-2xl sm:rounded-2xl shadow-2xl text-slate-100 overflow-hidden animate-in fade-in sm:zoom-in-95 duration-150 pb-[env(safe-area-inset-bottom)] sm:pb-0">
+      <div className="fixed sm:absolute bottom-0 sm:bottom-20 inset-x-0 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 z-30 w-full sm:w-[540px] max-h-[82dvh] sm:max-h-[580px] flex flex-col bg-[#0B0F19]/98 sm:bg-[#0B0F19]/95 backdrop-blur-xl border-t sm:border border-slate-700/80 rounded-t-2xl sm:rounded-2xl shadow-2xl text-slate-100 overflow-hidden animate-in fade-in sm:zoom-in-95 duration-150 pb-[env(safe-area-inset-bottom)] sm:pb-0">
         {/* Header */}
       <div className="px-4 py-3 bg-[#0E1525]/90 border-b border-slate-700/70 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2 min-w-0">
